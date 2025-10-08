@@ -113,3 +113,47 @@ public class GestionController : Controller
         var viewModel = new UbicacionViewModel
         {
             UbicacionesExistentes = await _context.Ubicaciones.ToListAsync(),
+            NuevaUbicacion = nuevaUbicacion
+        };
+        return View("Ubicaciones", viewModel);
+    }
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarUbicacion(int id, string nom_ubica)
+    {
+        if (string.IsNullOrEmpty(nom_ubica))
+        {
+            TempData["ErrorMessage"] = "El nombre de la ubicación no puede estar vacío.";
+            return RedirectToAction(nameof(Ubicaciones));
+        }
+        var ubicacion = await _context.Ubicaciones.FindAsync(id);
+        if (ubicacion == null) return NotFound();
+        
+        ubicacion.nom_ubica = nom_ubica;
+        _context.Update(ubicacion);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Ubicación actualizada exitosamente.";
+        return RedirectToAction(nameof(Ubicaciones));
+    }
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminarUbicacion(int id)
+    {
+        var ubicacion = await _context.Ubicaciones.FindAsync(id);
+        if (ubicacion == null) return NotFound();
+
+        var activoUsaUbicacion = await _context.Activos.AnyAsync(a => a.ubic_id == id);
+        if (activoUsaUbicacion)
+        {
+            TempData["ErrorMessage"] = "No se puede eliminar la ubicación porque está siendo utilizada por uno o más activos.";
+            return RedirectToAction(nameof(Ubicaciones));
+        }
+        
+        _context.Ubicaciones.Remove(ubicacion);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Ubicación eliminada exitosamente.";
+        return RedirectToAction(nameof(Ubicaciones));
+    }
+}
