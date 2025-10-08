@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using proyecto_programacion.Data;
-using proyecto_programacion.Models;
+using AssetManager.Data;
+using AssetManager.Models;
 using System.Threading.Tasks;
 using System.Linq;
 
-namespace proyecto_programacion.Controllers;
+namespace AssetManager.Controllers;
 
 public class GestionController : Controller
 {

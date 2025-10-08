@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace proyecto_programacion.Models;
+namespace AssetManager.Models;
 
 public class Ubicacion
 {
