@@ -1,17 +1,22 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<<<<<<< HEAD
     <title>@ViewData["Title"] - Gestor de Activos</title>
     
     <!-- CSS de Bootstrap y Font Awesome -->
+=======
+    <title>@ViewData["Title"] - Sistema de Activos</title>
+>>>>>>> feature/gestion
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/AssetManager.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
+<<<<<<< HEAD
     <div id="wrapper">
         <!-- Sidebar -->
         <div id="sidebar-wrapper">
@@ -74,10 +79,49 @@
         <!-- /#page-content-wrapper -->
     </div>
     <!-- /#wrapper -->
+=======
+    <!-- Menú de Navegación Lateral (Sidebar) -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-shield-alt logo-icon"></i>
+            <h3 class="logo-text">ActivoSys</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+                </li>
+                <li class="nav-title">INVENTARIO</li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Activos" asp-action="Index"><i class="fas fa-box"></i><span>Inventario de Activos</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Gestion" asp-action="Categorias"><i class="fas fa-tags"></i><span>Gestión de Categorías</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Gestion" asp-action="Ubicaciones"><i class="fas fa-map-marker-alt"></i><span>Gestión de Ubicaciones</span></a>
+                </li>
+                <!-- Aquí puedes añadir más enlaces a medida que crees nuevas funcionalidades -->
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Área de Contenido Principal -->
+    <main class="main-content">
+        <div class="container-fluid pt-4">
+            @RenderBody()
+        </div>
+    </main>
+>>>>>>> feature/gestion
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+
+>>>>>>> feature/gestion

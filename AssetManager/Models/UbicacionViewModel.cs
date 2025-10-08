@@ -1,4 +1,4 @@
-namespace proyecto_programacion.Models;
+namespace AssetManager.Models;
 
 public class UbicacionViewModel
 {

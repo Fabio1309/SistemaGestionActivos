@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using proyecto_programacion.Data;
-using proyecto_programacion.Models;
+using AssetManager.Data;
+using AssetManager.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace proyecto_programacion.Controllers;
+namespace AssetManager.Controllers;
 
 public class ActivosController : Controller
 {
