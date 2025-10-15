@@ -5,7 +5,7 @@ namespace AssetManager.Models;
 
 public class Usuario : IdentityUser
 {
-    // --- NUEVOS CAMPOS AÑADIDOS ---
+    
 
     [Required(ErrorMessage = "El nombre completo es obligatorio.")]
     [Display(Name = "Nombre Completo")]
