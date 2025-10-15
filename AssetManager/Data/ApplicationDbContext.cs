@@ -19,7 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<Usuario>
     {
         optionsBuilder.UseSqlite(options =>
         {
-            options.MigrationsAssembly("AssetManager"); // Asegúrate que coincida con el nombre de tu proyecto
+            options.MigrationsAssembly("AssetManager"); 
         });
         base.OnConfiguring(optionsBuilder);
     }
