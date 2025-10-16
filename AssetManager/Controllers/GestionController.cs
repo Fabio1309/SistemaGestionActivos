@@ -133,7 +133,7 @@ public class GestionController : Controller
         ubicacion.nom_ubica = nom_ubica;
         _context.Update(ubicacion);
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Ubicación actualizada exitosamente.";
+        TempData["GestionSuccessMessage"] = "Ubicación actualizada exitosamente.";
         return RedirectToAction(nameof(Ubicaciones));
     }
     
@@ -153,7 +153,7 @@ public class GestionController : Controller
         
         _context.Ubicaciones.Remove(ubicacion);
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Ubicación eliminada exitosamente.";
+        TempData["GestionSuccessMessage"] = "Ubicación eliminada exitosamente.";
         return RedirectToAction(nameof(Ubicaciones));
     }
 }
