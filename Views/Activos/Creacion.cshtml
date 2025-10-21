@@ -1,0 +1,93 @@
+@model AssetManager.Models.Activo
+
+@{
+    ViewData["Title"] = "Crear Nuevo Activo";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4>@ViewData["Title"]</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Creacion">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="nom_act" class="form-label"></label>
+                    <input asp-for="nom_act" class="form-control" />
+                    <span asp-validation-for="nom_act" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="cod_act" class="form-label"></label>
+                    <input asp-for="cod_act" class="form-control" />
+                    <span asp-validation-for="cod_act" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="categ_id" class="form-label"></label>
+                    <select asp-for="categ_id" class="form-select" asp-items="ViewBag.categ_id">
+                        <option value="">-- Seleccione una Categoría --</option>
+                    </select>
+                    <span asp-validation-for="categ_id" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ubic_id" class="form-label"></label>
+                    <select asp-for="ubic_id" class="form-select" asp-items="ViewBag.ubic_id">
+                        <option value="">-- Seleccione una Ubicación --</option>
+                    </select>
+                    <span asp-validation-for="ubic_id" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="modelo" class="form-label"></label>
+                    <input asp-for="modelo" class="form-control" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="num_serie" class="form-label"></label>
+                    <input asp-for="num_serie" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="costo" class="form-label"></label>
+                    <input asp-for="costo" class="form-control" />
+                    <span asp-validation-for="costo" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="fecha_com" class="form-label"></label>
+                    <input asp-for="fecha_com" class="form-control" />
+                    <span asp-validation-for="fecha_com" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="proveedor" class="form-label"></label>
+                    <input asp-for="proveedor" class="form-control" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="estado" class="form-label"></label>
+                    <select asp-for="estado" class="form-select" asp-items="@(ViewData["EstadosList"] as SelectList)">
+                        <option value="">-- Seleccione un Estado --</option>
+                    </select>
+                    <span asp-validation-for="estado" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Crear" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Volver a la Lista</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
