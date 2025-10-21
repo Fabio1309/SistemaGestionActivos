@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AssetManager.Models;
+namespace SistemaGestionActivos.Models;
 
 public class Activo
 {

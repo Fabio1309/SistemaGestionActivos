@@ -1,4 +1,5 @@
-namespace AssetManager.Models;
+using SistemaGestionActivos.Models;
+namespace SistemaGestionActivos.Models;
 
 public class UbicacionViewModel
 {
