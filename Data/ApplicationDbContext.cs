@@ -9,4 +9,7 @@ public class ApplicationDbContext : IdentityDbContext
         : base(options)
     {
     }
+    public DbSet<SistemaGestionActivos.Models.Categoria> Categorias { get; set; }
+    public DbSet<SistemaGestionActivos.Models.Ubicacion> Ubicaciones { get; set; }
+    public DbSet<SistemaGestionActivos.Models.Activo> Activos { get; set; }
 }
