@@ -1,0 +1,196 @@
+@model SistemaGestionActivos.Models.CategoriaViewModel
+
+@{
+    ViewData["Title"] = "Gestión de Categorías";
+}
+
+<style>
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1055;
+    }
+</style>
+
+<div class="toast-container">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="toast show align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">@TempData["SuccessMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+         <div class="toast show align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">@TempData["ErrorMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+</div>
+
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4>Categorías Existentes</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.CategoriasExistentes.Any())
+                {
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Nombre de la Categoría</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.CategoriasExistentes)
+                            {
+                                <tr>
+                                    <td>@item.nom_categoria</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="@item.categ_id" data-name="@item.nom_categoria">
+                                            <i class="fas fa-pencil-alt"></i> Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.categ_id" data-name="@item.nom_categoria">
+                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted text-center mt-3">No hay categorías creadas.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4>Añadir Nueva Categoría</h4>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Gestion" asp-action="CrearCategoria">
+                    @Html.AntiForgeryToken()
+                    <div class="form-group mb-3">
+                        <label asp-for="NuevaCategoria.nom_categoria" class="control-label">Nombre</label>
+                        <input asp-for="NuevaCategoria.nom_categoria" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="NuevaCategoria.nom_categoria" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary w-100">
+                           <i class="fas fa-save me-2"></i>Guardar Categoría
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Gestion" asp-action="EditarCategoria" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Categoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="edit-id" name="id" />
+                    <div class="mb-3">
+                        <label for="edit-name" class="col-form-label">Nuevo Nombre:</label>
+                        <input type="text" class="form-control" id="edit-name" name="nom_categoria" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Gestion" asp-action="EliminarCategoria" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="delete-id" name="id" />
+                    <p>¿Estás seguro de que quieres eliminar la categoría "<strong id="delete-name"></strong>"? Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            var editModal = document.getElementById('editModal');
+            if (editModal) {
+                editModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var id = button.getAttribute('data-id');
+                    var name = button.getAttribute('data-name');
+                    
+                    var modalTitle = editModal.querySelector('.modal-title');
+                    var modalInputId = editModal.querySelector('#edit-id');
+                    var modalInputName = editModal.querySelector('#edit-name');
+
+                    modalTitle.textContent = 'Editar Categoría: ' + name;
+                    modalInputId.value = id;
+                    modalInputName.value = name;
+                });
+            }
+
+            var deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var id = button.getAttribute('data-id');
+                    var name = button.getAttribute('data-name');
+
+                    var modalInputId = deleteModal.querySelector('#delete-id');
+                    var modalNameSpan = deleteModal.querySelector('#delete-name');
+                    
+                    modalInputId.value = id;
+                    modalNameSpan.textContent = name;
+                });
+            }
+
+            var toastElList = [].slice.call(document.querySelectorAll('.toast.show'));
+            var toastList = toastElList.map(function (toastEl) {
+                var toast = new bootstrap.Toast(toastEl, { autohide: false });
+                toast.show();
+                setTimeout(function() { toast.hide(); }, 5000);
+                return toast;
+            });
+        });
+    </script>
+}
