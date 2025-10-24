@@ -1,0 +1,90 @@
+@model SistemaGestionActivos.Models.GestionarRolesViewModel
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<Usuario> UserManager
+
+@{
+    ViewData["Title"] = "Gestionar Roles de Usuario";
+    // Obtenemos el usuario completo para mostrar más detalles
+    var user = await UserManager.FindByIdAsync(Model.UserId);
+    var currentUser = await UserManager.GetUserAsync(User);
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+    </div>
+    <div class="card-body">
+        <div class="mb-4 p-3 bg-light border rounded">
+            <h5>Editando Roles para:</h5>
+            <h3 class="text-primary">@user.NombreCompleto</h3>
+            <ul class="list-unstyled text-muted">
+                <li><strong>Email:</strong> @user.UserName</li>
+                <li>
+                    <strong>Edad:</strong> 
+                    @{
+                        var today = DateTime.Today;
+                        var age = today.Year - user.FechaNacimiento.Year;
+                        if (user.FechaNacimiento.Date > today.AddYears(-age)) age--;
+                    }
+                    @age años
+                </li>
+            </ul>
+        </div>
+
+        <form asp-action="GestionarRoles">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="UserId" />
+            
+            <h5>Asignar Roles:</h5>
+            <hr />
+
+            <div class="list-group">
+                @for (int i = 0; i < Model.Roles.Count; i++)
+                {
+                    <div class="list-group-item">
+                        <div class="form-check form-switch d-flex justify-content-between align-items-center">
+                            <div>
+                                <input type="hidden" asp-for="Roles[i].RoleId" />
+                                <input type="hidden" asp-for="Roles[i].RoleName" />
+
+                                @{
+                                    // Medida de seguridad: deshabilita el switch si el admin intenta quitarse su propio rol
+                                    var isDisabled = (user.Id == currentUser.Id && Model.Roles[i].RoleName == "Administrador");
+                                }
+
+                                <input type="checkbox" asp-for="Roles[i].IsSelected" class="form-check-input" disabled="@isDisabled" />
+                                <label class="form-check-label ms-2 fw-bold" for="Roles_@(i)__IsSelected">
+                                    @Model.Roles[i].RoleName
+                                </label>
+                                <small class="d-block text-muted ms-5">
+                                    @switch (Model.Roles[i].RoleName)
+                                    {
+                                        case "Administrador":
+                                            <text>Control total sobre todo el sistema.</text>
+                                            break;
+                                        case "Gestor de Activos":
+                                            <text>Puede gestionar el inventario, categorías y ubicaciones.</text>
+                                            break;
+                                        case "Técnico":
+                                            <text>Puede ver y gestionar órdenes de mantenimiento.</text>
+                                            break;
+                                        case "Empleado":
+                                            <text>Solo puede ver sus activos asignados y crear reportes.</text>
+                                            break;
+                                    }
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
