@@ -8,9 +8,12 @@
     <div class="card-header bg-light">
         <div class="d-flex justify-content-between align-items-center">
             <h4 class="mb-0 text-primary">@ViewData["Title"]</h4>
-            <a asp-action="Creacion" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Activo
-            </a>
+            @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+            {
+                <a asp-action="Creacion" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Activo
+                </a>
+            }
         </div>
     </div>
     <div class="card-body">
@@ -87,16 +90,51 @@
                                 <td>
                                     @{
                                         var badgeClass = "bg-secondary";
-                                        if (item.estado?.ToLower() == "operativo") { badgeClass = "bg-success"; }
-                                        else if (item.estado?.ToLower() == "en reparación") { badgeClass = "bg-warning text-dark"; }
+                                        if (item.estado?.ToLower() == "operativo" || item.estado?.ToLower() == "disponible") { badgeClass = "bg-success"; }
+                                        else if (item.estado?.ToLower() == "en reparación" || item.estado?.ToLower() == "en mantenimiento") { badgeClass = "bg-warning text-dark"; }
                                         else if (item.estado?.ToLower() == "de baja") { badgeClass = "bg-danger"; }
+                                        else if (item.estado?.ToLower() == "asignado") { badgeClass = "bg-info text-dark"; }
                                     }
                                     <span class="badge @badgeClass">@Html.DisplayFor(modelItem => item.estado)</span>
                                 </td>
                                 <td class="text-end">
-                                    <a asp-action="Editar" asp-route-id="@item.activo_id" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-pencil-alt"></i></a>
-                                    <a asp-action="Detalles" asp-route-id="@item.activo_id" class="btn btn-sm btn-outline-info" title="Ver Detalles"><i class="fas fa-eye"></i></a>
-                                    <a asp-action="Eliminar" asp-route-id="@item.activo_id" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash-alt"></i></a>
+                                    <div class="btn-group">
+                                        <a asp-action="Detalles" asp-route-id="@item.activo_id" class="btn btn-sm btn-outline-info" title="Ver Detalles"><i class="fas fa-eye"></i></a>
+                                        
+                                        @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+                                        {
+                                            <a asp-action="Editar" asp-route-id="@item.activo_id" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fas fa-pencil-alt"></i></a>
+                                            
+                                            <!-- ===== INICIO DE LA CORRECCIÓN ===== -->
+                                            <!-- Usamos un div separado para el dropdown y lo convertimos a 'dropend' -->
+                                            <div class="btn-group" role="group">
+                                                <button id="btnGroupDrop-@item.activo_id" type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false" title="Más Opciones" 
+                                                    data-bs-boundary="viewport" data-bs-popper-config='{"strategy":"fixed"}'>
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="btnGroupDrop-@item.activo_id">
+                                                    <li>
+                                                        <a class="dropdown-item" asp-controller="QrGenerator" asp-action="GenerateQrImage" asp-route-id="@item.activo_id" target="_blank">
+                                                            <i class="fas fa-qrcode fa-fw me-2"></i>Ver QR
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" asp-controller="QrGenerator" asp-action="GeneratePdfLabel" asp-route-id="@item.activo_id">
+                                                            <i class="fas fa-print fa-fw me-2"></i>Imprimir Etiqueta
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item text-danger" asp-action="Eliminar" asp-route-id="@item.activo_id">
+                                                            <i class="fas fa-trash-alt fa-fw me-2"></i>Eliminar
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <!-- ===== FIN DE LA CORRECCIÓN ===== -->
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
