@@ -11,9 +11,9 @@ namespace SistemaGestionActivos.Controllers
     public class OrdenesDeTrabajoController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<Usuario> _userManager;
 
-        public OrdenesDeTrabajoController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public OrdenesDeTrabajoController(ApplicationDbContext context, UserManager<Usuario> userManager)
         {
             _context = context;
             _userManager = userManager;

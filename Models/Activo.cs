@@ -48,5 +48,15 @@ public class Activo
 
     [ForeignKey("ubic_id")] 
     public virtual Ubicacion? Ubicacion { get; set; }
+
+    // Compatibilidad: propiedades más legibles usadas por controladores/vistas
+    [NotMapped]
+    public string Nombre { get => nom_act; set => nom_act = value; }
+
+    [NotMapped]
+    public string CodigoActivo { get => cod_act; set => cod_act = value; }
+
+    // Historial de asignaciones relacionado (navegación)
+    public virtual ICollection<Asignacion> HistorialAsignaciones { get; set; } = new List<Asignacion>();
 }
 
