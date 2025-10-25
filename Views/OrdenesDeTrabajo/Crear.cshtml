@@ -1,0 +1,31 @@
+@model sistemagestionactivos.Models.OrdenDeTrabajo
+@{ ViewData["Title"] = "Reportar Problema"; }
+
+<h1>Reportar un Problema</h1>
+<h4>Activo: <strong>@ViewBag.NombreActivo (@ViewBag.CodigoActivo)</strong></h4>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Crear">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Campo oculto para mantener la referencia al activo -->
+            <input type="hidden" asp-for="ActivoId" />
+
+            <div class="form-group mb-3">
+                <label asp-for="DescripcionProblema" class="control-label">Describa el problema detalladamente</label>
+                <textarea asp-for="DescripcionProblema" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="DescripcionProblema" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Crear Orden de Trabajo" class="btn btn-danger" />
+                <a asp-controller="Activos" asp-action="Details" asp-route-id="@Model.ActivoId" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
