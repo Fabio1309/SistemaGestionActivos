@@ -1,32 +1,45 @@
-# Blueprint de Render para el Sistema de Gestión de Activos
+# Blueprint de Render v1
+# Define los servicios que componen la aplicación.
 
+# Declara los servicios que se van a crear.
 services:
-  # 1. El Servicio Web (nuestra aplicación .NET)
+  # 1. El Servicio Web (nuestra aplicación .NET Core en un contenedor Docker)
   - type: web
-    name: sistema-gestion-activos # Elige un nombre único
-    runtime: docker # ¡CLAVE! Le decimos que use Docker
-    dockerfilePath: ./Dockerfile # La ruta a nuestro Dockerfile
-    # Configuración del disco persistente para la base de datos SQLite
+    name: sistema-gestion-activos
+    # ¡CLAVE! Especificamos que el entorno de ejecución es Docker.
+    runtime: docker
+    # Ruta al archivo Dockerfile en el repositorio.
+    dockerfilePath: ./Dockerfile
+    
+    # Configuración del disco persistente para la base de datos SQLite.
+    # Esto es crucial para que los datos no se borren en cada despliegue.
     disks:
-      - name: data
+      - name: data-disk
         mountPath: /var/data
         sizeGB: 1
-    # Variables de entorno para la aplicación
+        
+    # Variables de entorno para la aplicación web.
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ASPNETCORE_URLS
+        # Render proporciona la variable de entorno PORT automáticamente.
         value: http://0.0.0.0:${PORT}
       - key: ConnectionStrings__DefaultConnection
-        value: "Data Source=/var/data/app.db" # Guardará la BD aquí
-      # Conecta automáticamente la variable de entorno al servicio de Redis de abajo
-      - key: Redis__ConnectionString 
+        # La base de datos se guardará en el disco persistente.
+        value: "Data Source=/var/data/sga.db"
+      # Conexión a la instancia de Redis definida más abajo.
+      # 'fromService' crea una dependencia y obtiene la connection string.
+      - key: Redis__ConnectionString
         fromService:
           type: redis
-          name: redis-cache
+          name: cache-redis
           property: connectionString
 
-  # 2. El Servicio de Redis
+  # 2. El Servicio de Redis (para caché y sesiones)
   - type: redis
-    name: redis-cache
-    plan: free # Usa el plan gratuito de Redis que ofrece Render
+    name: cache-redis
+    # Utilizamos el plan gratuito que ofrece Render para Redis.
+    plan: free
+    # Desactivar la copia de seguridad automática para el plan gratuito.
+    maxmemoryPolicy: allkeys-lru
