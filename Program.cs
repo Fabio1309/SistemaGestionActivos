@@ -5,10 +5,21 @@ using SistemaGestionActivos.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. CONFIGURACIÓN DE LA BASE DE DATOS (ESTO YA LO TIENES) ---
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+if (builder.Environment.IsProduction())
+{
+    // En producción, usa PostgreSQL. La connection string vendrá de Render.
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+else
+{
+    // En desarrollo, sigue usando SQLite para simplicidad local.
+    var connectionString = builder.Configuration.GetConnectionString("SQLiteConnection") ?? "Data Source=app.db";
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // --- 2. AÑADIR Y CONFIGURAR EL SERVICIO DE IDENTITY ---
 // Le decimos a la aplicación que use nuestra clase 'Usuario' para la identidad.
