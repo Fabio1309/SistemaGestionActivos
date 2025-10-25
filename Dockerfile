@@ -4,14 +4,14 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copiamos el archivo .csproj y restauramos las dependencias
-COPY ["sistemagestionactivos.csproj", "."]
-RUN dotnet restore "./sistemagestionactivos.csproj"
+COPY ["SistemaGestionActivos.csproj", "."]
+RUN dotnet restore "./SistemaGestionActivos.csproj"
 
 # Copiamos el resto del código fuente
 COPY . .
 
 # Publicamos la aplicación en modo Release en la carpeta /app/publish
-RUN dotnet publish "sistemagestionactivos.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "SistemaGestionActivos.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # --- Fase 2: Ejecución (Final Stage) ---
 # Usamos la imagen ligera que solo contiene el runtime de ASP.NET Core
@@ -23,4 +23,4 @@ COPY --from=build /app/publish .
 EXPOSE 80
 
 # Comando final para iniciar la aplicación
-ENTRYPOINT ["dotnet", "sistemagestionactivos.dll"]
+ENTRYPOINT ["dotnet", "SistemaGestionActivos.dll"]
