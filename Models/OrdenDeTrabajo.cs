@@ -13,7 +13,7 @@ namespace SistemaGestionActivos.Models // Asegúrate de que este namespace coinc
     [Required(ErrorMessage = "La descripción del problema es obligatoria.")]
         [Column("descripcion_problema")]
         [Display(Name = "Descripción del Problema")]
-    public string DescripcionProblema { get; set; }
+    public string DescripcionProblema { get; set; } = string.Empty;
         
         [Column("fecha_creacion")]
         [Display(Name = "Fecha de Creación")]
@@ -35,7 +35,7 @@ namespace SistemaGestionActivos.Models // Asegúrate de que este namespace coinc
         public virtual Activo? Activo { get; set; }
 
     [Column("usuario_reporta_id")]
-    public string UsuarioReportaId { get; set; }
+    public string UsuarioReportaId { get; set; } = string.Empty;
     [ForeignKey("UsuarioReportaId")]
     public virtual Usuario? UsuarioReporta { get; set; }
 

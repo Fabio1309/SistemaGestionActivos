@@ -9,5 +9,5 @@ public class Categoria
 
     [Display(Name = "Categoría")]
     [Required(ErrorMessage = "El nombre de la categoría es obligatorio.")]
-    public string nom_categoria { get; set; }
+    public string nom_categoria { get; set; } = string.Empty;
 }

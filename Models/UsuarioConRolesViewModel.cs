@@ -6,7 +6,7 @@ namespace SistemaGestionActivos.Models
     // como la lista de roles que tiene asignados.
     public class UsuarioConRolesViewModel
     {
-        public Usuario Usuario { get; set; }
-        public IList<string> Roles { get; set; }
+        public Usuario? Usuario { get; set; }
+        public IList<string> Roles { get; set; } = new List<string>();
     }
 }

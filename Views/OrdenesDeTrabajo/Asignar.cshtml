@@ -1,0 +1,25 @@
+@model SistemaGestionActivos.Models.OrdenDeTrabajo
+@{ ViewData["Title"] = "Asignar Orden de Trabajo"; }
+
+<h1>@ViewData["Title"]</h1>
+
+<h4>OT para el activo: <strong>@Model.Activo?.nom_act</strong></h4>
+<p><strong>Problema reportado:</strong> @Model.DescripcionProblema</p>
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Asignar" asp-route-id="@Model.Id">
+            <div class="form-group mb-3">
+                <label for="tecnicoAsignadoId" class="control-label">Seleccione un Técnico</label>
+                <select name="tecnicoAsignadoId" class="form-control" asp-items="ViewBag.TecnicoId">
+                    <option value="">-- Asignar a --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Confirmar Asignación" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -9,5 +9,5 @@ public class Ubicacion
 
     [Display(Name = "Ubicación")]
     [Required(ErrorMessage = "El nombre de la ubicación es obligatorio.")]
-    public string nom_ubica { get; set; }
+    public string nom_ubica { get; set; } = string.Empty;
 }

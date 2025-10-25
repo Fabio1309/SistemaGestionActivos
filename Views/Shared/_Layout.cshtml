@@ -40,12 +40,13 @@
                             <li><a asp-controller="Gestion" asp-action="Ubicaciones"> <i class="fa fa-map-marker"></i> Ubicaciones</a></li>
                         </ul>
                     </li>
-                    <li>
-                        <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
-                         <ul class="nav-pills nav-stacked" style="list-style-type:none;">
-                            <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Órdenes de Trabajo</a></li>
-                         </ul>
-                    </li>
+                          <li>
+                                <!-- Hacemos que el enlace padre también dirija a la lista de OT -->
+                                <a asp-controller="OrdenesDeTrabajo" asp-action="Index"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
+                                 <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                     <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Órdenes de Trabajo</a></li>
+                                 </ul>
+                          </li>
 
                     <!-- Enlace condicional para Administradores -->
                     @if (User.IsInRole("Administrador"))

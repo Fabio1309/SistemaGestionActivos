@@ -9,7 +9,7 @@ public class Usuario : IdentityUser
 
     [Required(ErrorMessage = "El nombre completo es obligatorio.")]
     [Display(Name = "Nombre Completo")]
-    public string NombreCompleto { get; set; }
+    public string NombreCompleto { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "La fecha de nacimiento es obligatoria.")]
     [Display(Name = "Fecha de Nacimiento")]

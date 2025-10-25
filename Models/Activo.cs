@@ -10,11 +10,11 @@ public class Activo
 
     [Display(Name = "Nombre del Activo")]
     [Required(ErrorMessage = "El nombre es obligatorio.")]
-    public string nom_act { get; set; }
+    public string nom_act { get; set; } = string.Empty;
 
     [Display(Name = "Código del Activo")]
     [Required(ErrorMessage = "El código es obligatorio.")]
-    public string cod_act { get; set; }
+    public string cod_act { get; set; } = string.Empty;
 
     [Display(Name = "Modelo")]
     public string? modelo { get; set; }
@@ -35,7 +35,7 @@ public class Activo
 
     [Display(Name = "Estado")]
     [Required(ErrorMessage = "El estado es obligatorio.")]
-    public string estado { get; set; }
+    public string estado { get; set; } = string.Empty;
 
     [Display(Name = "Categoría")]
     public int? categ_id { get; set; } 

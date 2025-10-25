@@ -1,0 +1,145 @@
+@model SistemaGestionActivos.Models.OrdenDeTrabajoViewModel
+
+@{
+    ViewData["Title"] = "Gestión de Órdenes de Trabajo";
+}
+
+<!-- Contenedor para notificaciones Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="toast show align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">@TempData["SuccessMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+         <div class="toast show align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">@TempData["ErrorMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    }
+</div>
+
+<h1>@ViewData["Title"]</h1>
+<p>Desde aquí puede gestionar todas las órdenes de trabajo del sistema.</p>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4>Listado de OTs</h4>
+    </div>
+    <div class="card-body">
+        @if (Model.OrdenesDeTrabajo.Any())
+        {
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Activo</th>
+                        <th>Problema</th>
+                        <th>Estado</th>
+                        <th>Técnico Asignado</th>
+                        <th>Fecha Creación</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.OrdenesDeTrabajo)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Activos" asp-action="Detalles" asp-route-id="@item.ActivoId">
+                                    @item.Activo?.nom_act
+                                </a>
+                            </td>
+                            <td>@item.DescripcionProblema</td>
+                            <td>
+                                <span class="badge @(item.Estado == EstadoOT.Abierta ? "bg-warning text-dark" : item.Estado == EstadoOT.Asignada ? "bg-info text-dark" : "bg-secondary")">
+                                    @item.Estado
+                                </span>
+                            </td>
+                            <td>@item.TecnicoAsignado?.UserName</td>
+                            <td>@item.FechaCreacion.ToString("g")</td>
+                            <td class="text-end">
+                                @if (item.Estado == EstadoOT.Abierta)
+                                {
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignModal" 
+                                            data-id="@item.Id" data-activo="@item.Activo?.nom_act">
+                                        <i class="fas fa-user-plus"></i> Asignar
+                                    </button>
+                                }
+                                <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fas fa-eye"></i> Ver Detalles</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted text-center mt-3">No hay órdenes de trabajo registradas.</p>
+        }
+    </div>
+</div>
+
+<!-- Modal para Asignar Técnico -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="OrdenesDeTrabajo" asp-action="Asignar" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignModalLabel">Asignar Técnico a OT</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="assign-id" name="id" />
+                    <p>Asignando OT para el activo: <strong id="assign-activo-name"></strong></p>
+                    <div class="mb-3">
+                        <label for="tecnicoAsignadoId" class="col-form-label">Seleccionar Técnico:</label>
+                        <select class="form-control" id="tecnicoAsignadoId" name="tecnicoAsignadoId" asp-items="Model.TecnicosDisponibles" required>
+                             <option value="">-- Seleccione un Técnico --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar Asignación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Lógica para el modal de asignación
+            var assignModal = document.getElementById('assignModal');
+            if (assignModal) {
+                assignModal.addEventListener('show.bs.modal', function (event) {
+                    var button = event.relatedTarget;
+                    var id = button.getAttribute('data-id');
+                    var activoName = button.getAttribute('data-activo');
+                    
+                    var modalInputId = assignModal.querySelector('#assign-id');
+                    var modalActivoName = assignModal.querySelector('#assign-activo-name');
+
+                    modalInputId.value = id;
+                    modalActivoName.textContent = activoName;
+                });
+            }
+
+            // Lógica para auto-cerrar los toasts de notificación
+            var toastElList = [].slice.call(document.querySelectorAll('.toast.show'));
+            var toastList = toastElList.map(function (toastEl) {
+                var toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                toast.show();
+            });
+        });
+    </script>
+}
