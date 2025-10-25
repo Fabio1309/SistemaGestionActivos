@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using sistemagestionactivos.Data;
-using sistemagestionactivos.Models;
+using SistemaGestionActivos.Data;
+using SistemaGestionActivos.Models;
 using System.Security.Claims; // Necesario para obtener el ID del usuario logueado
 
-namespace sistemagestionactivos.Controllers
+namespace SistemaGestionActivos.Controllers
 {
     [Authorize] // Todos los usuarios logueados pueden acceder a este controlador
     public class OrdenesDeTrabajoController : Controller

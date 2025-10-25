@@ -4,44 +4,120 @@
     ViewData["Title"] = "Detalles del Activo";
 }
 
+<!-- Mensajes de éxito/error que vienen de otras acciones -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
 <h1>@ViewData["Title"]</h1>
 
 <div>
     <h4>@Model.nom_act</h4>
     <hr />
     <dl class="row">
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.nom_act)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.nom_act)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.nom_act)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.nom_act)</dd>
         
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.cod_act)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.cod_act)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.cod_act)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.cod_act)</dd>
         
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Categoria)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Categoria.nom_categoria)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Categoria)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Categoria.nom_categoria)</dd>
 
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Ubicacion)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Ubicacion.nom_ubica)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Ubicacion)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Ubicacion.nom_ubica)</dd>
 
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.modelo)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.modelo)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.modelo)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.modelo)</dd>
         
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.num_serie)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.num_serie)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.num_serie)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.num_serie)</dd>
         
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.costo)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.costo)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.costo)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.costo)</dd>
         
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.fecha_com)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.fecha_com)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.fecha_com)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.fecha_com)</dd>
         
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.proveedor)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.proveedor)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.proveedor)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.proveedor)</dd>
         
-    <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.estado)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.estado)</dd>
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.estado)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.estado)</dd>
     </dl>
 </div>
-<div class="mt-3">
-    <a asp-action="Editar" asp-route-id="@Model?.activo_id" class="btn btn-primary">Editar</a> |
-    <a asp-action="Index" class="btn btn-secondary">Volver a la Lista</a>
+
+<hr/>
+
+<!-- Botones de Acción Condicionales -->
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="my-4 d-flex flex-wrap gap-2">
+        <!-- Botones para Gestores y Administradores -->
+        @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+        {
+            <a asp-action="Editar" asp-route-id="@Model.activo_id" class="btn btn-primary"><i class="fa fa-edit"></i> Editar</a>
+
+            @if (Model.estado == "Disponible") // Usando tu estado como string
+            {
+                <a asp-controller="Asignaciones" asp-action="Asignar" asp-route-activoId="@Model.activo_id" class="btn btn-success">
+                    <i class="fa fa-arrow-right"></i> Asignar Activo (Check-out)
+                </a>
+            }
+            else if (Model.estado == "Asignado")
+            {
+                <a asp-controller="Asignaciones" asp-action="Devolver" asp-route-activoId="@Model.activo_id" class="btn btn-warning">
+                    <i class="fa fa-arrow-left"></i> Registrar Devolución (Check-in)
+                </a>
+            }
+        }
+        
+        <!-- Botón para Reportar Problema (visible para más roles) -->
+        @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos") || User.IsInRole("Empleado"))
+        {
+            <a asp-controller="OrdenesDeTrabajo" asp-action="Crear" asp-route-activoId="@Model.activo_id" class="btn btn-danger">
+                <i class="fa fa-triangle-exclamation"></i> Reportar Problema
+            </a>
+        }
+
+        <a asp-action="Index" class="btn btn-secondary"><i class="fa fa-list"></i> Volver a la Lista</a>
+    </div>
+}
+
+<!-- Historial de Asignaciones -->
+<div class="mt-4">
+    <h3>Historial de Asignaciones</h3>
+    @if (Model.HistorialAsignaciones != null && Model.HistorialAsignaciones.Any())
+    {
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Asignado a</th>
+                    <th>Fecha de Asignación</th>
+                    <th>Fecha de Devolución</th>
+                    <th>Estado al Devolver</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.HistorialAsignaciones.OrderByDescending(h => h.FechaAsignacion))
+                {
+                    <tr>
+                        <td>@item.Usuario?.UserName</td>
+                        <td>@item.FechaAsignacion.ToString("g")</td>
+                        <td>@item.FechaDevolucion?.ToString("g")</td>
+                        <td>@item.EstadoDevolucion</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Este activo aún no tiene historial de asignaciones.</p>
+    }
 </div>

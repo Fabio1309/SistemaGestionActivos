@@ -67,6 +67,8 @@ public class ActivosController : Controller
         var activo = await _context.Activos
             .Include(a => a.Categoria)
             .Include(a => a.Ubicacion)
+            .Include(a => a.HistorialAsignaciones)
+                .ThenInclude(h => h.Usuario)
             .FirstOrDefaultAsync(m => m.activo_id == id);
         if (activo == null) return NotFound();
         return View(activo);
