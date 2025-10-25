@@ -1,0 +1,32 @@
+# Blueprint de Render para el Sistema de Gestión de Activos
+
+services:
+  # 1. El Servicio Web (nuestra aplicación .NET)
+  - type: web
+    name: sistema-gestion-activos # Elige un nombre único
+    runtime: docker # ¡CLAVE! Le decimos que use Docker
+    dockerfilePath: ./Dockerfile # La ruta a nuestro Dockerfile
+    # Configuración del disco persistente para la base de datos SQLite
+    disks:
+      - name: data
+        mountPath: /var/data
+        sizeGB: 1
+    # Variables de entorno para la aplicación
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:${PORT}
+      - key: ConnectionStrings__DefaultConnection
+        value: "Data Source=/var/data/app.db" # Guardará la BD aquí
+      # Conecta automáticamente la variable de entorno al servicio de Redis de abajo
+      - key: Redis__ConnectionString 
+        fromService:
+          type: redis
+          name: redis-cache
+          property: connectionString
+
+  # 2. El Servicio de Redis
+  - type: redis
+    name: redis-cache
+    plan: free # Usa el plan gratuito de Redis que ofrece Render
