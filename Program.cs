@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SistemaGestionActivos.Data;
 using SistemaGestionActivos.Models;
+using SistemaGestionActivos.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddDefaultIdentity<Usuario>(options => options.SignIn.RequireCo
 
 // Esto ya lo tienes, registra los controladores y vistas.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHostedService<MantenimientoSchedulerService>();
 
 var app = builder.Build();
 
@@ -70,6 +73,63 @@ using (var scope = app.Services.CreateScope())
         
         // Ejecuta el método para crear roles y el admin
         await SeedRolesAndAdminAsync(roleManager, userManager);
+            // --- DIAGNÓSTICO: listar roles del admin para verificar seed ---
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                var admin = await userManager.FindByEmailAsync("admin@activosys.com");
+                if (admin != null)
+                {
+                    var adminRoles = await userManager.GetRolesAsync(admin);
+                    logger.LogInformation("Seed check: admin '{Email}' roles: {Roles}", admin.Email, string.Join(',', adminRoles));
+                    // Si no tiene el rol 'Administrador', lo agregamos para asegurarnos de que pueda acceder a las áreas de admin.
+                    if (!adminRoles.Contains("Administrador"))
+                    {
+                        var addResult = await userManager.AddToRoleAsync(admin, "Administrador");
+                        if (addResult.Succeeded)
+                        {
+                            logger.LogInformation("Seed fix: admin '{Email}' fue agregado al rol 'Administrador'", admin.Email);
+                        }
+                        else
+                        {
+                            logger.LogWarning("Seed fix: no se pudo agregar el admin '{Email}' al rol 'Administrador': {Errors}", admin.Email, string.Join(';', addResult.Errors.Select(e => e.Description)));
+                        }
+                    }
+
+                    // Además hacemos una comprobación directa en la BD para ver las filas de AspNetUserRoles vinculadas al admin.
+                    try
+                    {
+                        var userRoles = context.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<string>>()
+                            .Where(ur => ur.UserId == admin.Id)
+                            .ToList();
+                        if (userRoles.Any())
+                        {
+                            var roleIds = userRoles.Select(ur => ur.RoleId).ToList();
+                            var roleNames = context.Set<Microsoft.AspNetCore.Identity.IdentityRole>()
+                                .Where(r => roleIds.Contains(r.Id))
+                                .Select(r => r.Name)
+                                .ToList();
+                            logger.LogInformation("DB check: admin '{Email}' roles in AspNetUserRoles: {DBRoles}", admin.Email, string.Join(',', roleNames));
+                        }
+                        else
+                        {
+                            logger.LogInformation("DB check: admin '{Email}' no tiene entradas en AspNetUserRoles", admin.Email);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error al consultar AspNetUserRoles para admin");
+                    }
+                }
+                else
+                {
+                    logger.LogWarning("Seed check: admin user 'admin@activosys.com' not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error while checking admin roles after seed");
+            }
     }
     catch (Exception ex)
     {

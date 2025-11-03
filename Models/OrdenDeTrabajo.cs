@@ -10,10 +10,10 @@ namespace SistemaGestionActivos.Models // Asegúrate de que este namespace coinc
         [Column("ot_id")] // Mapea a la columna 'ot_id' en la base de datos
         public int Id { get; set; }
         
-    [Required(ErrorMessage = "La descripción del problema es obligatoria.")]
+        [Required(ErrorMessage = "La descripción del problema es obligatoria.")]
         [Column("descripcion_problema")]
         [Display(Name = "Descripción del Problema")]
-    public string DescripcionProblema { get; set; } = string.Empty;
+        public string DescripcionProblema { get; set; } = string.Empty;
         
         [Column("fecha_creacion")]
         [Display(Name = "Fecha de Creación")]
@@ -34,14 +34,16 @@ namespace SistemaGestionActivos.Models // Asegúrate de que este namespace coinc
         [ForeignKey("ActivoId")]
         public virtual Activo? Activo { get; set; }
 
-    [Column("usuario_reporta_id")]
-    public string UsuarioReportaId { get; set; } = string.Empty;
-    [ForeignKey("UsuarioReportaId")]
-    public virtual Usuario? UsuarioReporta { get; set; }
+        [Column("usuario_reporta_id")]
+        public string UsuarioReportaId { get; set; } = string.Empty;
+        [ForeignKey("UsuarioReportaId")]
+        public virtual Usuario? UsuarioReporta { get; set; }
 
         [Column("tecnico_asignado_id")]
         public string? TecnicoAsignadoId { get; set; }
-    [ForeignKey("TecnicoAsignadoId")]
-    public virtual Usuario? TecnicoAsignado { get; set; }
+        [ForeignKey("TecnicoAsignadoId")]
+        public virtual Usuario? TecnicoAsignado { get; set; }
+
+        public virtual ICollection<CostoMantenimiento> Costos { get; set; } = new List<CostoMantenimiento>();
     }
 }

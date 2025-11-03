@@ -16,7 +16,7 @@
     <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.cod_act)</dt>
     <dd class = "col-sm-9">@Html.DisplayFor(model => model.cod_act)</dd>
     <dt class = "col-sm-3">@Html.DisplayNameFor(model => model.Categoria)</dt>
-    <dd class = "col-sm-9">@Html.DisplayFor(model => model.Categoria.nom_categoria)</dd>
+    <dd class = "col-sm-9">@(Model.Categoria?.nom_categoria ?? String.Empty)</dd>
     </dl>
 
     <form asp-action="Eliminar">

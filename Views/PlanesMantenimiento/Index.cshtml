@@ -1,0 +1,52 @@
+@model IEnumerable<SistemaGestionActivos.Models.PlanMantenimiento>
+@using SistemaGestionActivos.Models
+
+@{
+    ViewData["Title"] = "Planes de Mantenimiento";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Crear nuevo plan</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Tarea</th>
+            <th>Frecuencia</th>
+            <th>Intervalo</th>
+            <th>Próxima ejecución</th>
+            <th>Categoría</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model != null && Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Titulo</td>
+                <td>@item.Tarea</td>
+                <td>@item.Frecuencia</td>
+                <td>@item.Intervalo</td>
+                <td>@item.FechaProximaEjecucion.ToString("yyyy-MM-dd")</td>
+                <td>@(item.Categoria?.nom_categoria ?? "-")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="7">No hay planes de mantenimiento definidos.</td>
+        </tr>
+    }
+    </tbody>
+</table>

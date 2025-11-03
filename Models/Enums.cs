@@ -11,4 +11,25 @@ namespace SistemaGestionActivos.Models
         Resuelta,
         Cerrada
     }
+
+    public enum EstadoActivo
+    {
+        Disponible, // Era "Operativo"
+        Asignado,
+        EnMantenimiento, // Era "En Reparación"
+        DeBaja
+    }
+
+    public enum EstadoDevolucion
+    {
+        Funcional,
+        Dañado
+    }
+    public enum FrecuenciaMantenimiento
+    {
+        Diaria,
+        Semanal,
+        Mensual,
+        Anual
+    }
 }

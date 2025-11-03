@@ -12,7 +12,10 @@ public class ApplicationDbContext : IdentityDbContext<Usuario>
     }
 
     public DbSet<Activo> Activos { get; set; }
+    public DbSet<Asignacion> Asignaciones { get; set; }
     public DbSet<Categoria> Categorias { get; set; }
     public DbSet<Ubicacion> Ubicaciones { get; set; }
     public DbSet<OrdenDeTrabajo> OrdenesDeTrabajo { get; set; } 
+    public DbSet<CostoMantenimiento> CostosMantenimiento { get; set; }
+    public DbSet<PlanMantenimiento> PlanesMantenimiento { get; set; }
 }

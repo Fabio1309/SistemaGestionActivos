@@ -85,15 +85,16 @@
                             <tr>
                                 <td><strong>@Html.DisplayFor(modelItem => item.nom_act)</strong></td>
                                 <td>@Html.DisplayFor(modelItem => item.cod_act)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Categoria.nom_categoria)</td>
-                                <td>@Html.DisplayFor(modelItem => item.Ubicacion.nom_ubica)</td>
+                                <td>@(item.Categoria?.nom_categoria ?? String.Empty)</td>
+                                <td>@(item.Ubicacion?.nom_ubica ?? String.Empty)</td>
                                 <td>
                                     @{
-                                        var badgeClass = "bg-secondary";
-                                        if (item.estado?.ToLower() == "operativo" || item.estado?.ToLower() == "disponible") { badgeClass = "bg-success"; }
-                                        else if (item.estado?.ToLower() == "en reparación" || item.estado?.ToLower() == "en mantenimiento") { badgeClass = "bg-warning text-dark"; }
-                                        else if (item.estado?.ToLower() == "de baja") { badgeClass = "bg-danger"; }
-                                        else if (item.estado?.ToLower() == "asignado") { badgeClass = "bg-info text-dark"; }
+                                        // Comparar directamente con el enum (item.estado es EstadoActivo)
+                                        var badgeClass = item.estado == SistemaGestionActivos.Models.EstadoActivo.Disponible ? "bg-success"
+                                            : item.estado == SistemaGestionActivos.Models.EstadoActivo.EnMantenimiento ? "bg-warning text-dark"
+                                            : item.estado == SistemaGestionActivos.Models.EstadoActivo.DeBaja ? "bg-danger"
+                                            : item.estado == SistemaGestionActivos.Models.EstadoActivo.Asignado ? "bg-info text-dark"
+                                            : "bg-secondary";
                                     }
                                     <span class="badge @badgeClass">@Html.DisplayFor(modelItem => item.estado)</span>
                                 </td>

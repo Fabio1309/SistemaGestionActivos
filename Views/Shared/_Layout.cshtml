@@ -1,5 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@using SistemaGestionActivos.Models
+@using SistemaGestionActivos.Models 
 
 @inject SignInManager<Usuario> SignInManager
 @inject UserManager<Usuario> UserManager
@@ -35,18 +35,44 @@
                     <li>
                         <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-box fa-stack-1x"></i></span> Gestión de Activos</a>
                         <ul class="nav-pills nav-stacked" style="list-style-type:none;">
-                            <li><a asp-controller="Activos" asp-action="Index"> <i class="fa fa-laptop"></i> Activos</a></li>
-                            <li><a asp-controller="Gestion" asp-action="Categorias"> <i class="fa fa-tags"></i> Categorías</a></li>
-                            <li><a asp-controller="Gestion" asp-action="Ubicaciones"> <i class="fa fa-map-marker"></i> Ubicaciones</a></li>
+                            <li><a asp-controller="Activos" asp-action="Index"> <i class="fa fa-laptop"></i> Inventario</a></li>
+                            
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+                            {
+                                <li><a asp-controller="Gestion" asp-action="Categorias"> <i class="fa fa-tags"></i> Categorías</a></li>
+                                <li><a asp-controller="Gestion" asp-action="Ubicaciones"> <i class="fa fa-map-marker"></i> Ubicaciones</a></li>
+                            }
                         </ul>
                     </li>
-                          <li>
-                                <!-- Hacemos que el enlace padre también dirija a la lista de OT -->
-                                <a asp-controller="OrdenesDeTrabajo" asp-action="Index"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
-                                 <ul class="nav-pills nav-stacked" style="list-style-type:none;">
-                                     <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Órdenes de Trabajo</a></li>
-                                 </ul>
-                          </li>
+                    
+                    <!-- Enlace para Técnicos -->
+                    @if (User.IsInRole("Técnico"))
+                    {
+                        <li>
+                            <a asp-controller="OrdenesDeTrabajo" asp-action="MisAsignaciones">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-tasks fa-stack-1x"></i></span> Mis OTs Asignadas
+                            </a>
+                        </li>
+                    }
+                    
+                    <!-- Enlace para Administradores y Gestores -->
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+                    {
+                        <li>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
+                             <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                 <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Todas las OTs</a></li>
+                                 
+                                 <!-- ===== INICIO DE LA MODIFICACIÓN ===== -->
+                                 <li>
+                                     <a asp-controller="PlanesMantenimiento" asp-action="Index">
+                                         <i class="fa fa-calendar-alt"></i> Planificador
+                                     </a>
+                                 </li>
+                                 <!-- ===== FIN DE LA MODIFICACIÓN ===== -->
+                             </ul>
+                        </li>
+                    }
 
                     <!-- Enlace condicional para Administradores -->
                     @if (User.IsInRole("Administrador"))

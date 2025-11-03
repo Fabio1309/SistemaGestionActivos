@@ -1,0 +1,48 @@
+@model IEnumerable<SistemaGestionActivos.Models.OrdenDeTrabajo>
+@{ ViewData["Title"] = "Mis Órdenes de Trabajo Asignadas"; }
+
+<h1>@ViewData["Title"]</h1>
+<p>Aquí puede ver y actualizar el estado de las órdenes de trabajo que le han sido asignadas.</p>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Activo</th>
+                    <th>Problema Reportado</th>
+                    <th>Estado Actual</th>
+                    <th>Fecha de Creación</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                             <a asp-controller="Activos" asp-action="Detalles" asp-route-id="@item.ActivoId">
+                                @item.Activo?.nom_act
+                            </a>
+                        </td>
+                        <td>@item.DescripcionProblema</td>
+                        <td>
+                            <span class="badge @(item.Estado == EstadoOT.Asignada ? "bg-info text-dark" : item.Estado == EstadoOT.EnProgreso ? "bg-primary" : "bg-success")">
+                                @item.Estado
+                            </span>
+                        </td>
+                        <td>@item.FechaCreacion.ToString("g")</td>
+                        <td class="text-end">
+                            @if (item.Estado != EstadoOT.Resuelta && item.Estado != EstadoOT.Cerrada)
+                            {
+                                <a asp-action="Actualizar" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Actualizar
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
