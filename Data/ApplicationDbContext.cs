@@ -16,4 +16,5 @@ public class ApplicationDbContext : IdentityDbContext<Usuario>
     public DbSet<Categoria> Categorias { get; set; }
     public DbSet<Ubicacion> Ubicaciones { get; set; }
     public DbSet<OrdenDeTrabajo> OrdenesDeTrabajo { get; set; } 
+    public DbSet<CostoMantenimiento> CostosMantenimiento { get; set; }
 }

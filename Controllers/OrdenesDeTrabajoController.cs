@@ -155,6 +155,7 @@ namespace SistemaGestionActivos.Controllers
         {
             var ordenDeTrabajo = await _context.OrdenesDeTrabajo
                 .Include(o => o.Activo)
+                .Include(o => o.Costos)
                 .FirstOrDefaultAsync(o => o.Id == id);
             
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -223,6 +224,42 @@ namespace SistemaGestionActivos.Controllers
             }
 
             return RedirectToAction(nameof(MisAsignaciones));
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Técnico")]
+        public async Task<IActionResult> AgregarCosto(int ordenDeTrabajoId, string descripcion, decimal monto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var ordenDeTrabajo = await _context.OrdenesDeTrabajo.FindAsync(ordenDeTrabajoId);
+
+            // Validar que el técnico sea el dueño de la OT
+            if (ordenDeTrabajo == null || ordenDeTrabajo.TecnicoAsignadoId != userId)
+            {
+                TempData["ErrorMessage"] = "No tiene permiso para añadir costos a esta OT.";
+                return RedirectToAction(nameof(MisAsignaciones));
+            }
+
+            if (!string.IsNullOrEmpty(descripcion) && monto > 0)
+            {
+                var nuevoCosto = new CostoMantenimiento
+                {
+                    OrdenDeTrabajoId = ordenDeTrabajoId,
+                    Descripcion = descripcion,
+                    Monto = monto,
+                    Fecha = DateTime.Now
+                };
+                _context.CostosMantenimiento.Add(nuevoCosto);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Costo agregado correctamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "La descripción y un monto mayor a cero son requeridos.";
+            }
+
+            // Redirigir de vuelta a la misma página de actualización
+            return RedirectToAction(nameof(Actualizar), new { id = ordenDeTrabajoId });
         }
     }
 }

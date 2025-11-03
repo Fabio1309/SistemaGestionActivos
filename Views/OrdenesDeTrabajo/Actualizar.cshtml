@@ -49,3 +49,42 @@
         </div>
     </div>
 </div>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h4>Registrar Costos de Mantenimiento</h4>
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="AgregarCosto" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ordenDeTrabajoId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción (Repuesto, Servicio, etc.)</label>
+                        <input type="text" name="descripcion" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto</label>
+                        <input type="number" name="monto" class="form-control" step="0.01" required />
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Añadir Costo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h4>Costos Registrados</h4>
+        <ul class="list-group">
+            @foreach (var costo in Model.Costos.OrderBy(c => c.Fecha))
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    @costo.Descripcion
+                    <span class="badge bg-primary rounded-pill">@costo.Monto.ToString("C")</span>
+                </li>
+            }
+            <li class="list-group-item d-flex justify-content-between align-items-center active">
+                <strong>Total</strong>
+                <strong>@Model.Costos.Sum(c => c.Monto).ToString("C")</strong>
+            </li>
+        </ul>
+    </div>
+</div>
