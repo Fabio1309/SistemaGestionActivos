@@ -4,9 +4,9 @@
 
 @{
     ViewData["Title"] = "Gestionar Roles de Usuario";
-    // Obtenemos el usuario completo para mostrar más detalles
-    var user = await UserManager.FindByIdAsync(Model.UserId);
-    var currentUser = await UserManager.GetUserAsync(User);
+    // Obtenemos el usuario completo para mostrar más detalles (defensivo)
+    var user = await UserManager.FindByIdAsync(Model.UserId) ?? new Usuario();
+    var currentUser = await UserManager.GetUserAsync(User) ?? new Usuario();
 }
 
 <div class="card shadow-sm">
@@ -49,7 +49,7 @@
 
                                 @{
                                     // Medida de seguridad: deshabilita el switch si el admin intenta quitarse su propio rol
-                                    var isDisabled = (user.Id == currentUser.Id && Model.Roles[i].RoleName == "Administrador");
+                                    var isDisabled = (user.Id ?? string.Empty) == (currentUser.Id ?? string.Empty) && (Model.Roles[i].RoleName == "Administrador");
                                 }
 
                                 <input type="checkbox" asp-for="Roles[i].IsSelected" class="form-check-input" disabled="@isDisabled" />

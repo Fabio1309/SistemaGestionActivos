@@ -35,7 +35,7 @@ public class Activo
 
     [Display(Name = "Estado")]
     [Required(ErrorMessage = "El estado es obligatorio.")]
-    public string estado { get; set; } = string.Empty;
+    public EstadoActivo estado { get; set; }
 
     [Display(Name = "Categoría")]
     public int? categ_id { get; set; } 

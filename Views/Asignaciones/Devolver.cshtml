@@ -1,0 +1,40 @@
+@model SistemaGestionActivos.Models.Asignacion
+@using SistemaGestionActivos.Models 
+
+@{
+    ViewData["Title"] = "Registrar Devolución de Activo";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (Model.Activo != null)
+{
+    <h4>Activo: <strong>@Model.Activo.nom_act</strong></h4>
+}
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Devolver" asp-route-id="@Model.Id">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Campo oculto para enviar el ID de la asignación que se está cerrando -->
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="form-group mb-3">
+                <label for="estadoDevolucion" class="control-label">Indique el Estado de Devolución</label>
+                <!-- Este dropdown se genera a partir del enum 'EstadoDevolucion' -->
+                <select name="estadoDevolucion" class="form-control" asp-items="Html.GetEnumSelectList<EstadoDevolucion>()"></select>
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Confirmar Devolución" class="btn btn-primary" />
+                <a asp-controller="Activos" asp-action="Detalles" asp-route-id="@Model.ActivoId" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

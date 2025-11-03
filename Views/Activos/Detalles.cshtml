@@ -1,4 +1,6 @@
 @model SistemaGestionActivos.Models.Activo
+@using SistemaGestionActivos.Models
+
 
 @{
     ViewData["Title"] = "Detalles del Activo";
@@ -26,11 +28,11 @@
         <dt class="col-sm-3">@Html.DisplayNameFor(model => model.cod_act)</dt>
         <dd class="col-sm-9">@Html.DisplayFor(model => model.cod_act)</dd>
         
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Categoria)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Categoria.nom_categoria)</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Categoria)</dt>
+    <dd class="col-sm-9">@(Model.Categoria?.nom_categoria ?? String.Empty)</dd>
 
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Ubicacion)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Ubicacion.nom_ubica)</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Ubicacion)</dt>
+    <dd class="col-sm-9">@(Model.Ubicacion?.nom_ubica ?? String.Empty)</dd>
 
         <dt class="col-sm-3">@Html.DisplayNameFor(model => model.modelo)</dt>
         <dd class="col-sm-9">@Html.DisplayFor(model => model.modelo)</dd>
@@ -55,7 +57,7 @@
 <hr/>
 
 <!-- Botones de Acción Condicionales -->
-@if (User.Identity.IsAuthenticated)
+@if (Model is not null && (User?.Identity?.IsAuthenticated ?? false))
 {
     <div class="my-4 d-flex flex-wrap gap-2">
         <!-- Botones para Gestores y Administradores -->
@@ -63,13 +65,14 @@
         {
             <a asp-action="Editar" asp-route-id="@Model.activo_id" class="btn btn-primary"><i class="fa fa-edit"></i> Editar</a>
 
-            @if (Model.estado == "Disponible") // Usando tu estado como string
+            <!-- --- ¡CAMBIOS IMPORTANTES AQUÍ! --- -->
+            @if (Model.estado == EstadoActivo.Disponible)
             {
                 <a asp-controller="Asignaciones" asp-action="Asignar" asp-route-activoId="@Model.activo_id" class="btn btn-success">
                     <i class="fa fa-arrow-right"></i> Asignar Activo (Check-out)
                 </a>
             }
-            else if (Model.estado == "Asignado")
+            else if (Model.estado == EstadoActivo.Asignado)
             {
                 <a asp-controller="Asignaciones" asp-action="Devolver" asp-route-activoId="@Model.activo_id" class="btn btn-warning">
                     <i class="fa fa-arrow-left"></i> Registrar Devolución (Check-in)
@@ -92,7 +95,7 @@
 <!-- Historial de Asignaciones -->
 <div class="mt-4">
     <h3>Historial de Asignaciones</h3>
-    @if (Model.HistorialAsignaciones != null && Model.HistorialAsignaciones.Any())
+    @if (Model?.HistorialAsignaciones?.Any() == true)
     {
         <table class="table table-striped table-bordered">
             <thead class="table-dark">

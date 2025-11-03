@@ -80,13 +80,13 @@
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td><strong>@item.Usuario.NombreCompleto</strong></td>
-                            <td>@item.Usuario.Email</td>
+                            <td><strong>@(item.Usuario?.NombreCompleto ?? String.Empty)</strong></td>
+                            <td>@(item.Usuario?.Email ?? String.Empty)</td>
                             <td>
                                 @foreach (var role in item.Roles) { <span class="badge bg-primary me-1">@role</span> }
                             </td>
                             <td>
-                                @if (item.Usuario.LockoutEnd.HasValue && item.Usuario.LockoutEnd.Value > DateTimeOffset.UtcNow)
+                                @if (item.Usuario?.LockoutEnd.HasValue == true && item.Usuario.LockoutEnd.Value > DateTimeOffset.UtcNow)
                                 {
                                     <span class="badge bg-danger">Desactivado</span>
                                 }
@@ -96,30 +96,33 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <a class="btn btn-primary btn-sm" asp-action="GestionarRoles" asp-route-userId="@item.Usuario.Id" title="Gestionar Roles">
-                                    <i class="fas fa-user-shield"></i>
-                                </a>
-                                <form asp-action="ToggleUserStatus" method="post" class="d-inline">
-                                    <input type="hidden" name="userId" value="@item.Usuario.Id" />
-                                    @if (item.Usuario.LockoutEnd.HasValue && item.Usuario.LockoutEnd.Value > DateTimeOffset.UtcNow)
-                                    {
-                                        <button type="submit" class="btn btn-success btn-sm" title="Activar Usuario">
-                                            <i class="fas fa-user-check"></i>
+                                @if (item.Usuario != null)
+                                {
+                                    <a class="btn btn-primary btn-sm" asp-action="GestionarRoles" asp-route-userId="@item.Usuario.Id" title="Gestionar Roles">
+                                        <i class="fas fa-user-shield"></i>
+                                    </a>
+                                    <form asp-action="ToggleUserStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="userId" value="@item.Usuario.Id" />
+                                        @if (item.Usuario.LockoutEnd.HasValue && item.Usuario.LockoutEnd.Value > DateTimeOffset.UtcNow)
+                                        {
+                                            <button type="submit" class="btn btn-success btn-sm" title="Activar Usuario">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-warning btn-sm" title="Desactivar Usuario">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        }
+                                    </form>
+                                    <form asp-action="ForzarRestablecimiento" method="post" class="d-inline">
+                                        <input type="hidden" name="userId" value="@item.Usuario.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Forzar Restablecimiento de Contraseña">
+                                            <i class="fas fa-key"></i>
                                         </button>
-                                    }
-                                    else
-                                    {
-                                        <button type="submit" class="btn btn-warning btn-sm" title="Desactivar Usuario">
-                                            <i class="fas fa-user-slash"></i>
-                                        </button>
-                                    }
-                                </form>
-                                <form asp-action="ForzarRestablecimiento" method="post" class="d-inline">
-                                    <input type="hidden" name="userId" value="@item.Usuario.Id" />
-                                    <button type="submit" class="btn btn-danger btn-sm" title="Forzar Restablecimiento de Contraseña">
-                                        <i class="fas fa-key"></i>
-                                    </button>
-                                </form>
+                                    </form>
+                                }
                             </td>
                         </tr>
                     }

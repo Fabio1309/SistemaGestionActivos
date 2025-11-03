@@ -37,9 +37,10 @@ namespace SistemaGestionActivos.Controllers
             // Filtro por texto de búsqueda (nombre o email)
             if (!string.IsNullOrEmpty(searchString))
             {
+                // Protegemos propiedades que pueden ser null usando coalescencia
                 usersQuery = usersQuery.Where(u => 
-                    u.NombreCompleto.ToLower().Contains(searchString.ToLower()) || 
-                    u.Email.ToLower().Contains(searchString.ToLower())
+                    (u.NombreCompleto ?? string.Empty).ToLower().Contains(searchString.ToLower()) || 
+                    (u.Email ?? string.Empty).ToLower().Contains(searchString.ToLower())
                 );
             }
 
@@ -75,6 +76,13 @@ namespace SistemaGestionActivos.Controllers
 
             // Evitar que el admin se desactive a sí mismo
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                // Si no podemos obtener el usuario actual, abortamos la operación de forma segura
+                TempData["ErrorMessage"] = "No se pudo verificar el usuario actual.";
+                return RedirectToAction(nameof(Index));
+            }
+
             if (user.Id == currentUser.Id)
             {
                 TempData["ErrorMessage"] = "No puedes desactivar tu propia cuenta.";
@@ -176,12 +184,12 @@ namespace SistemaGestionActivos.Controllers
             var model = new GestionarRolesViewModel
             {
                 UserId = user.Id,
-                UserName = user.UserName,
+                UserName = user.UserName ?? string.Empty,
                 Roles = allRoles.Select(role => new RoleCheckboxViewModel
                 {
                     RoleId = role.Id,
-                    RoleName = role.Name,
-                    IsSelected = userRoles.Contains(role.Name)
+                    RoleName = role.Name ?? string.Empty,
+                    IsSelected = userRoles.Contains(role.Name ?? string.Empty)
                 }).ToList()
             };
             return View(model);
@@ -195,7 +203,8 @@ namespace SistemaGestionActivos.Controllers
             if (user == null) return NotFound();
 
             var userRoles = await _userManager.GetRolesAsync(user);
-            var selectedRoles = model.Roles.Where(r => r.IsSelected).Select(r => r.RoleName);
+            var rolesCollection = model.Roles ?? Enumerable.Empty<RoleCheckboxViewModel>();
+            var selectedRoles = rolesCollection.Where(r => r.IsSelected).Select(r => r.RoleName ?? string.Empty);
 
             var result = await _userManager.AddToRolesAsync(user, selectedRoles.Except(userRoles));
             if (!result.Succeeded)
