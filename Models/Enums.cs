@@ -25,4 +25,11 @@ namespace SistemaGestionActivos.Models
         Funcional,
         Dañado
     }
+    public enum FrecuenciaMantenimiento
+    {
+        Diaria,
+        Semanal,
+        Mensual,
+        Anual
+    }
 }

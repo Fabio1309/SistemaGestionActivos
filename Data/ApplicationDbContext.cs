@@ -17,4 +17,5 @@ public class ApplicationDbContext : IdentityDbContext<Usuario>
     public DbSet<Ubicacion> Ubicaciones { get; set; }
     public DbSet<OrdenDeTrabajo> OrdenesDeTrabajo { get; set; } 
     public DbSet<CostoMantenimiento> CostosMantenimiento { get; set; }
+    public DbSet<PlanMantenimiento> PlanesMantenimiento { get; set; }
 }
