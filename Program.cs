@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SistemaGestionActivos.Data;
 using SistemaGestionActivos.Models;
+using SistemaGestionActivos.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.AddDefaultIdentity<Usuario>(options => options.SignIn.RequireCo
 
 // Esto ya lo tienes, registra los controladores y vistas.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHostedService<MantenimientoSchedulerService>();
 
 var app = builder.Build();
 

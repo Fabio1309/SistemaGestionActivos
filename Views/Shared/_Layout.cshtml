@@ -45,8 +45,6 @@
                         </ul>
                     </li>
                     
-                    <!-- ===== INICIO DE LA MODIFICACIÓN ===== -->
-                    
                     <!-- Enlace para Técnicos -->
                     @if (User.IsInRole("Técnico"))
                     {
@@ -61,14 +59,20 @@
                     @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
                     {
                         <li>
-                            <a asp-controller="OrdenesDeTrabajo" asp-action="Index"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
                              <ul class="nav-pills nav-stacked" style="list-style-type:none;">
                                  <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Todas las OTs</a></li>
+                                 
+                                 <!-- ===== INICIO DE LA MODIFICACIÓN ===== -->
+                                 <li>
+                                     <a asp-controller="PlanesMantenimiento" asp-action="Index">
+                                         <i class="fa fa-calendar-alt"></i> Planificador
+                                     </a>
+                                 </li>
+                                 <!-- ===== FIN DE LA MODIFICACIÓN ===== -->
                              </ul>
                         </li>
                     }
-                    
-                    <!-- ===== FIN DE LA MODIFICACIÓN ===== -->
 
                     <!-- Enlace condicional para Administradores -->
                     @if (User.IsInRole("Administrador"))
