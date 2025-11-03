@@ -1,0 +1,51 @@
+@model SistemaGestionActivos.Models.OrdenDeTrabajo
+@{ ViewData["Title"] = "Actualizar Orden de Trabajo"; }
+
+<h1>@ViewData["Title"]</h1>
+
+<h4>OT para el activo: <strong>@Model.Activo?.nom_act</strong></h4>
+<p><strong>Problema reportado:</strong> @Model.DescripcionProblema</p>
+<hr />
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Actualizar" asp-route-id="@Model.Id">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="estado" class="form-label"><strong>Nuevo Estado</strong></label>
+                    <select name="estado" class="form-select" asp-items="ViewBag.EstadosList"></select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="comentarios" class="form-label"><strong>Añadir Comentarios o Notas del Trabajo Realizado</strong></label>
+                <textarea name="comentarios" class="form-control" rows="4" placeholder="Ej: Se reemplazó la pieza X. Queda en espera de repuesto..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Guardar Actualización</button>
+                <a asp-action="MisAsignaciones" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                Historial de Comentarios
+            </div>
+            <div class="card-body" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;">
+                @if (!string.IsNullOrEmpty(Model.Comentarios))
+                {
+                    @Model.Comentarios
+                }
+                else
+                {
+                    <p class="text-muted">No hay comentarios previos.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

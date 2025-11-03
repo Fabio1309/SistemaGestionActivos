@@ -129,5 +129,100 @@ namespace SistemaGestionActivos.Controllers
             }
             return View(ordenDeTrabajo);
         }
+        [Authorize(Roles = "Técnico")]
+        public async Task<IActionResult> MisAsignaciones()
+        {
+            // Obtenemos el ID del técnico que ha iniciado sesión
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            // Buscamos solo las OTs asignadas a este técnico
+            var misOrdenesDeTrabajo = await _context.OrdenesDeTrabajo
+                .Where(o => o.TecnicoAsignadoId == userId)
+                .Include(o => o.Activo)
+                .Include(o => o.UsuarioReporta)
+                .OrderByDescending(o => o.FechaCreacion)
+                .ToListAsync();
+
+            return View(misOrdenesDeTrabajo);
+        }
+        
+        [Authorize(Roles = "Técnico")]
+        public async Task<IActionResult> Actualizar(int id)
+        {
+            var ordenDeTrabajo = await _context.OrdenesDeTrabajo
+                .Include(o => o.Activo)
+                .FirstOrDefaultAsync(o => o.Id == id);
+            
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Doble validación de seguridad: la OT debe existir y debe estar asignada al técnico actual.
+            if (ordenDeTrabajo == null || ordenDeTrabajo.TecnicoAsignadoId != userId)
+            {
+                TempData["ErrorMessage"] = "No tiene permiso para actualizar esta Orden de Trabajo.";
+                return RedirectToAction(nameof(MisAsignaciones));
+            }
+
+            // Creamos una lista de los estados que el técnico puede seleccionar
+            var estadosPermitidos = new List<EstadoOT>
+            {
+                EstadoOT.EnProgreso,
+                EstadoOT.EnEsperaDeRepuesto,
+                EstadoOT.Resuelta
+            };
+            ViewData["EstadosList"] = new SelectList(estadosPermitidos, ordenDeTrabajo.Estado);
+
+            return View(ordenDeTrabajo);
+        }
+
+        // POST: /OrdenesDeTrabajo/Actualizar/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Técnico")]
+        public async Task<IActionResult> Actualizar(int id, EstadoOT estado, string comentarios)
+        {
+            var ordenDeTrabajo = await _context.OrdenesDeTrabajo.FindAsync(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (ordenDeTrabajo == null || ordenDeTrabajo.TecnicoAsignadoId != userId)
+            {
+                return Forbid(); // Prohibido si no es su OT
+            }
+
+            // Actualizamos los campos
+            ordenDeTrabajo.Estado = estado;
+            // Añadimos el nuevo comentario al historial de comentarios (si el campo es nulo, lo inicializamos)
+            ordenDeTrabajo.Comentarios = string.IsNullOrEmpty(ordenDeTrabajo.Comentarios)
+                ? $"[{DateTime.Now:g}] {comentarios}"
+                : $"{ordenDeTrabajo.Comentarios}\n[{DateTime.Now:g}] {comentarios}";
+
+            try
+            {
+                _context.Update(ordenDeTrabajo);
+
+                // Si el estado se marca como "Resuelta", también actualizamos el estado del activo
+                if (estado == EstadoOT.Resuelta)
+                {
+                    var activo = await _context.Activos.FindAsync(ordenDeTrabajo.ActivoId);
+                    if (activo != null && activo.estado == EstadoActivo.EnMantenimiento)
+                    {
+                        activo.estado = EstadoActivo.Disponible;
+                        _context.Update(activo);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Orden de Trabajo actualizada con éxito.";
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                TempData["ErrorMessage"] = "Ocurrió un error al guardar los cambios.";
+            }
+
+            return RedirectToAction(nameof(MisAsignaciones));
+        }
     }
 }
