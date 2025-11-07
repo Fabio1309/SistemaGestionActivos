@@ -1,90 +1,85 @@
 @model SistemaGestionActivos.Models.OrdenDeTrabajo
-@{ ViewData["Title"] = "Actualizar Orden de Trabajo"; }
-
-<h1>@ViewData["Title"]</h1>
-
-<h4>OT para el activo: <strong>@Model.Activo?.nom_act</strong></h4>
-<p><strong>Problema reportado:</strong> @Model.DescripcionProblema</p>
-<hr />
+@{
+    ViewData["Title"] = "Actualizar Orden de Trabajo";
+}
 
 <div class="row">
-    <div class="col-md-8">
-        <form asp-action="Actualizar" asp-route-id="@Model.Id">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="estado" class="form-label"><strong>Nuevo Estado</strong></label>
-                    <select name="estado" class="form-select" asp-items="ViewBag.EstadosList"></select>
-                </div>
-            </div>
-            
-            <div class="mb-3">
-                <label for="comentarios" class="form-label"><strong>Añadir Comentarios o Notas del Trabajo Realizado</strong></label>
-                <textarea name="comentarios" class="form-control" rows="4" placeholder="Ej: Se reemplazó la pieza X. Queda en espera de repuesto..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">Guardar Actualización</button>
-                <a asp-action="MisAsignaciones" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                Historial de Comentarios
-            </div>
-            <div class="card-body" style="white-space: pre-wrap; max-height: 200px; overflow-y: auto;">
-                @if (!string.IsNullOrEmpty(Model.Comentarios))
-                {
-                    @Model.Comentarios
-                }
-                else
-                {
-                    <p class="text-muted">No hay comentarios previos.</p>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row mt-4">
+    <!-- Columna 1: Actualizar Estado y Comentarios -->
     <div class="col-md-6">
-        <h4>Registrar Costos de Mantenimiento</h4>
-        <div class="card">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4 class="mb-0">Actualizar OT-@Model.Id</h4>
+            </div>
             <div class="card-body">
-                <form asp-action="AgregarCosto" method="post">
+                <h5 class="mb-3">Activo: @Model.Activo.nom_act (@Model.Activo.cod_act)</h5>
+                <form asp-action="Actualizar" method="post">
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="ordenDeTrabajoId" value="@Model.Id" />
+                    <input type="hidden" name="id" value="@Model.Id" />
+
                     <div class="mb-3">
-                        <label for="descripcion" class="form-label">Descripción (Repuesto, Servicio, etc.)</label>
-                        <input type="text" name="descripcion" class="form-control" required />
+                        <label for="estado" class="form-label">Nuevo Estado</label>
+                        <!-- Usamos el ViewData["EstadosList"] que definimos en el controlador -->
+                        <select name="estado" class="form-select" asp-items="@ViewData["EstadosList"] as SelectList"></select>
                     </div>
+
                     <div class="mb-3">
-                        <label for="monto" class="form-label">Monto</label>
-                        <input type="number" name="monto" class="form-control" step="0.01" required />
+                        <label for="comentarios" class="form-label">Añadir Comentarios</label>
+                        <textarea name="comentarios" class="form-control" rows="3" placeholder="Escribe la actualización del trabajo realizado..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Añadir Costo</button>
+
+                    <button type="submit" class="btn btn-primary w-100">Actualizar Estado y Comentarios</button>
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- Columna 2: Registro de Costos -->
     <div class="col-md-6">
-        <h4>Costos Registrados</h4>
-        <ul class="list-group">
-            @foreach (var costo in Model.Costos.OrderBy(c => c.Fecha))
-            {
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    @costo.Descripcion
-                    <span class="badge bg-primary rounded-pill">@costo.Monto.ToString("C")</span>
-                </li>
-            }
-            <li class="list-group-item d-flex justify-content-between align-items-center active">
-                <strong>Total</strong>
-                <strong>@Model.Costos.Sum(c => c.Monto).ToString("C")</strong>
-            </li>
-        </ul>
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4 class="mb-0">Registro de Costos</h4>
+            </div>
+            <div class="card-body">
+                <!-- Formulario para AÑADIR costos -->
+                <form asp-controller="OrdenesDeTrabajo" asp-action="AgregarCosto" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ordenDeTrabajoId" value="@Model.Id" />
+                    
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Concepto (Repuesto o Servicio)</label>
+                        <input type="text" name="descripcion" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto ($)</label>
+                        <input type="number" name="monto" class="form-control" step="0.01" required />
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mb-3">
+                        <i class="fa fa-plus me-2"></i>Añadir Costo
+                    </button>
+                </form>
+
+                <hr />
+
+                <!-- Lista de costos YA AÑADIDOS -->
+                <h5>Costos Registrados</h5>
+                <ul class="list-group">
+                    @foreach (var costo in Model.Costos)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            @costo.Descripcion
+                            <span>$ @costo.Monto.ToString("N2")</span>
+                        </li>
+                    }
+                    @if (!Model.Costos.Any())
+                    {
+                        <li class="list-group-item">Aún no hay costos registrados.</li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between bg-light fw-bold">
+                        <span>TOTAL</span>
+                        <span>$ @Model.Costos.Sum(c => c.Monto).ToString("N2")</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>

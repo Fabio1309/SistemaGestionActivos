@@ -32,55 +32,82 @@
                 
                 @if (SignInManager.IsSignedIn(User))
                 {
-                    <li>
-                        <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-box fa-stack-1x"></i></span> Gestión de Activos</a>
-                        <ul class="nav-pills nav-stacked" style="list-style-type:none;">
-                            <li><a asp-controller="Activos" asp-action="Index"> <i class="fa fa-laptop"></i> Inventario</a></li>
-                            
-                            @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
-                            {
+                    <!-- ============================================= -->
+                    <!-- SECCIÓN PARA ADMINS Y GESTORES DE ACTIVOS -->
+                    <!-- ============================================= -->
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+                    {
+                        <li>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-box fa-stack-1x"></i></span> Gestión de Activos</a>
+                            <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                <li><a asp-controller="Activos" asp-action="Index"> <i class="fa fa-laptop"></i> Inventario Completo</a></li>
                                 <li><a asp-controller="Gestion" asp-action="Categorias"> <i class="fa fa-tags"></i> Categorías</a></li>
                                 <li><a asp-controller="Gestion" asp-action="Ubicaciones"> <i class="fa fa-map-marker"></i> Ubicaciones</a></li>
-                            }
-                        </ul>
-                    </li>
-                    
-                    <!-- Enlace para Técnicos -->
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
+                            <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Todas las OTs</a></li>
+                                <li><a asp-controller="PlanesMantenimiento" asp-action="Index"> <i class="fa fa-calendar-alt"></i> Planificador</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a asp-controller="Facturacion" asp-action="Index">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-file-invoice-dollar fa-stack-1x"></i></span> Facturación
+                            </a>
+                        </li>
+                    }
+
+                    <!-- ============================ -->
+                    <!-- SECCIÓN PARA TÉCNICOS -->
+                    <!-- ============================ -->
                     @if (User.IsInRole("Técnico"))
                     {
+                        <li>
+                            <a asp-controller="Activos" asp-action="MisActivos">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-laptop fa-stack-1x"></i></span> Mis Activos
+                            </a>
+                        </li>
                         <li>
                             <a asp-controller="OrdenesDeTrabajo" asp-action="MisAsignaciones">
                                 <span class="fa-stack fa-lg pull-left"><i class="fa fa-tasks fa-stack-1x"></i></span> Mis OTs Asignadas
                             </a>
                         </li>
-                    }
-                    
-                    <!-- Enlace para Administradores y Gestores -->
-                    @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
-                    {
                         <li>
-                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
-                             <ul class="nav-pills nav-stacked" style="list-style-type:none;">
-                                 <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Todas las OTs</a></li>
-                                 
-                                 <!-- ===== INICIO DE LA MODIFICACIÓN ===== -->
-                                 <li>
-                                     <a asp-controller="PlanesMantenimiento" asp-action="Index">
-                                         <i class="fa fa-calendar-alt"></i> Planificador
-                                     </a>
-                                 </li>
-                                 <!-- ===== FIN DE LA MODIFICACIÓN ===== -->
-                             </ul>
+                            <a asp-controller="OrdenesDeTrabajo" asp-action="Crear">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-exclamation-triangle fa-stack-1x"></i></span> Reportar Incidencia
+                            </a>
                         </li>
                     }
 
-                    <!-- Enlace condicional para Administradores -->
+                    <!-- ============================ -->
+                    <!-- SECCIÓN PARA EMPLEADOS -->
+                    <!-- ============================ -->
+                    @if (User.IsInRole("Empleado"))
+                    {
+                        <li>
+                            <a asp-controller="Activos" asp-action="MisActivos">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-laptop fa-stack-1x"></i></span> Mis Activos
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="OrdenesDeTrabajo" asp-action="Crear">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-exclamation-triangle fa-stack-1x"></i></span> Reportar Incidencia
+                            </a>
+                        </li>
+                    }
+
+                    <!-- ============================ -->
+                    <!-- SECCIÓN SOLO PARA ADMINS -->
+                    <!-- ============================ -->
                     @if (User.IsInRole("Administrador"))
                     {
                         <li>
                             <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-users fa-stack-1x"></i></span> Administración</a>
                             <ul class="nav-pills nav-stacked" style="list-style-type:none;">
                                 <li><a asp-controller="Admin" asp-action="Index"> <i class="fa fa-user-cog"></i> Usuarios y Roles</a></li>
+                                <li><a asp-controller="Admin" asp-action="LogAuditoria"> <i class="fa fa-shield-alt"></i> Log de Auditoría</a></li>
                             </ul>
                         </li>
                     }
