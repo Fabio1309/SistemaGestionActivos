@@ -261,5 +261,23 @@ namespace SistemaGestionActivos.Controllers
             // Redirigir de vuelta a la misma página de actualización
             return RedirectToAction(nameof(Actualizar), new { id = ordenDeTrabajoId });
         }
+
+        [Authorize(Roles = "Administrador, Gestor de Activos")]
+        public async Task<IActionResult> Detalles(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var ot = await _context.OrdenesDeTrabajo
+                .Include(o => o.Costos)
+                .Include(o => o.Factura) // Para saber si ya fue facturada
+                .Include(o => o.Activo)
+                .Include(o => o.UsuarioReporta)
+                .Include(o => o.TecnicoAsignado)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (ot == null) return NotFound("La Orden de Trabajo no fue encontrada.");
+            
+            return View(ot);
+        }
     }
 }
