@@ -3,6 +3,15 @@
     ViewData["Title"] = "Detalle de Orden de Trabajo";
 }
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">OT-@Model.Id (Estado: @Model.Estado)</h4>
@@ -12,7 +21,7 @@
         <div class="row">
             <div class="col-md-6">
                 <h5>Información General</h5>
-                <p class="mb-1"><strong>Activo:</strong> @Model.Activo.nom_act (@Model.Activo.cod_act)</p>
+                <p class="mb-1"><strong>Activo:</strong> @Model.Activo?.nom_act (@Model.Activo?.cod_act)</p>
                 <p class="mb-1"><strong>Reportado por:</strong> @(Model.UsuarioReporta?.UserName ?? "N/A")</p>
                 <p class="mb-1"><strong>Fecha Reporte:</strong> @Model.FechaCreacion.ToString("g")</p>
                 <p class="mb-1"><strong>Técnico Asignado:</strong> @(Model.TecnicoAsignado?.UserName ?? "Sin Asignar")</p>
@@ -52,13 +61,20 @@
                 {
                     @if (Model.Factura == null)
                     {
-                        <form asp-controller="Facturacion" asp-action="GenerarFactura" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="ordenTrabajoId" value="@Model.Id" />
-                            <button type="submit" class="btn btn-success btn-lg w-100">
-                                <i class="fa fa-file-invoice-dollar me-2"></i> Generar Factura
-                            </button>
-                        </form>
+                        @if (Model.Costos.Any())
+                        {
+                            <form asp-controller="Facturacion" asp-action="GenerarFactura" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ordenTrabajoId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-success btn-lg w-100">
+                                    <i class="fa fa-file-invoice-dollar me-2"></i> Generar Factura
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <p class="text-warning">Esta OT no tiene costos registrados y no se puede facturar.</p>
+                        }
                     }
                     else
                     {
