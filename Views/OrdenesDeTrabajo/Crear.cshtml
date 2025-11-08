@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Reportar Incidencia";
-    // Verificamos si el controlador nos envió un nombre de activo (Flujo 1)
     bool esActivoEspecifico = ViewBag.NombreActivo != null;
 }
 
@@ -33,8 +32,15 @@
 
             <div class="mb-3">
                 <label asp-for="DescripcionProblema" class="form-label"></label>
-                <textarea asp-for="DescripcionProblema" class="form-control" rows="5" placeholder="Describe el problema con el mayor detalle posible..."></textarea>
+                <textarea id="descripcionProblema" asp-for="DescripcionProblema" class="form-control" rows="5" placeholder="Describe el problema con el mayor detalle posible..."></textarea>
                 <span asp-validation-for="DescripcionProblema" class="text-danger"></span>
+            </div>
+
+            <div class="mb-2">
+                <small class="text-muted">Sugerencia de categoría: </small>
+                <span id="predictedCategory" class="badge bg-info text-dark">-</span>
+                <span id="predictSpinner" class="spinner-border spinner-border-sm text-secondary ms-2" role="status" style="width:1rem;height:1rem;display:none"><span class="visually-hidden">Loading...</span></span>
+                <small id="predictMessage" class="text-muted ms-2">&nbsp;</small>
             </div>
 
             <div class="mt-4">
@@ -42,5 +48,85 @@
                 <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
+
+        @* Mostrar categoría predicha después de enviar si el controlador la puso en TempData *@
+        @if (TempData["PredictedCategory"] != null)
+        {
+            <div class="alert alert-info mt-3">Categoría sugerida al enviar: <strong>@TempData["PredictedCategory"]</strong></div>
+        }
     </div>
 </div>
+
+<script>
+    // Simple debounce helper
+    function debounce(fn, wait) {
+        let t;
+        return function (...args) {
+            clearTimeout(t);
+            t = setTimeout(() => fn.apply(this, args), wait);
+        };
+    }
+
+    const textarea = document.getElementById('descripcionProblema');
+    const badge = document.getElementById('predictedCategory');
+    const predictSpinner = document.getElementById('predictSpinner');
+    const predictMessage = document.getElementById('predictMessage');
+
+    function getAntiForgeryToken() {
+        const el = document.querySelector('input[name="__RequestVerificationToken"]');
+        return el ? el.value : null;
+    }
+
+    async function predict(text) {
+            if (!text || text.trim().length < 3) {
+                if (badge) badge.textContent = '-';
+                if (predictMessage) predictMessage.textContent = '';
+                return;
+            }
+
+            if (predictSpinner) predictSpinner.style.display = 'inline-block';
+            if (predictMessage) predictMessage.textContent = '';
+
+            const token = getAntiForgeryToken();
+
+            try {
+                const res = await fetch('/OrdenesDeTrabajo/PredictCategory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token || ''
+                    },
+                    body: JSON.stringify({ descripcion: text })
+                });
+
+                if (!res.ok) {
+                    // Server returned non-200, show a friendly message
+                    if (badge) badge.textContent = '-';
+                    if (predictMessage) predictMessage.textContent = 'error del servidor';
+                    return;
+                }
+
+                const json = await res.json();
+                if (json && json.ok && json.category) {
+                    if (badge) badge.textContent = json.category;
+                    if (predictMessage) predictMessage.textContent = '';
+                } else {
+                    if (badge) badge.textContent = '-';
+                    if (predictMessage) predictMessage.textContent = json?.message ?? 'sin predicción';
+                }
+            } catch (e) {
+                if (badge) badge.textContent = '-';
+                if (predictMessage) predictMessage.textContent = 'error de red';
+                console.error('predict error', e);
+            } finally {
+                if (predictSpinner) predictSpinner.style.display = 'none';
+            }
+        }
+
+        if (textarea) {
+            textarea.addEventListener('input', debounce((e) => predict(e.target.value), 500));
+            // Trigger initial prediction if there is prefilled text
+            if (textarea.value && textarea.value.trim().length > 2) predict(textarea.value);
+        }
+    </script>
+    

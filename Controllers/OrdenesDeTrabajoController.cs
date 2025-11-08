@@ -15,15 +15,19 @@ namespace SistemaGestionActivos.Controllers
     [Authorize]
     public class OrdenesDeTrabajoController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<Usuario> _userManager;
-        private readonly IConfiguration _configuration;
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<Usuario> _userManager;
+    private readonly IConfiguration _configuration;
+    private readonly SistemaGestionActivos.Services.ICategoryPredictionService _predictor;
+    private readonly ILogger<OrdenesDeTrabajoController> _logger;
 
-        public OrdenesDeTrabajoController(ApplicationDbContext context, UserManager<Usuario> userManager, IConfiguration configuration)
+        public OrdenesDeTrabajoController(ApplicationDbContext context, UserManager<Usuario> userManager, IConfiguration configuration, SistemaGestionActivos.Services.ICategoryPredictionService predictor, ILogger<OrdenesDeTrabajoController> logger)
         {
             _context = context;
             _userManager = userManager;
             _configuration = configuration;
+            _predictor = predictor;
+            _logger = logger;
         }
 
         // GET: /OrdenesDeTrabajo
@@ -201,6 +205,20 @@ namespace SistemaGestionActivos.Controllers
 
             if (ModelState.IsValid)
             {
+                // Usar el servicio de ML para predecir la categoría sugerida (no se persiste en BD por ahora)
+                try
+                {
+                    var predicted = _predictor.PredictCategory(ordenDeTrabajo.DescripcionProblema);
+                    if (!string.IsNullOrEmpty(predicted))
+                    {
+                        TempData["PredictedCategory"] = predicted;
+                    }
+                }
+                catch
+                {
+                    // No interrumpir si ML falla
+                }
+
                 var activo = await _context.Activos.FindAsync(ordenDeTrabajo.ActivoId);
                 if (activo != null && activo.estado == EstadoActivo.Disponible)
                 {
@@ -441,6 +459,45 @@ namespace SistemaGestionActivos.Controllers
                 .ToListAsync();
 
             return View(misReportes);
+        }
+
+        // POST: /OrdenesDeTrabajo/PredictCategory
+        // Endpoint simple para AJAX: enviar JSON { "descripcion": "texto..." }
+        [HttpPost]
+        public IActionResult PredictCategory([FromBody] PredictionRequest request)
+        {
+            if (request == null)
+            {
+                _logger.LogDebug("PredictCategory called with null request");
+                return Json(new { ok = false, category = (string?)null, message = "payload missing" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Descripcion))
+            {
+                _logger.LogDebug("PredictCategory called with empty description");
+                return Json(new { ok = false, category = (string?)null, message = "descripcion vacía" });
+            }
+
+            try
+            {
+                var cat = _predictor.PredictCategory(request.Descripcion);
+                if (cat == null)
+                {
+                    _logger.LogInformation("PredictCategory: modelo no disponible o no pudo predecir para: {Text}", request.Descripcion);
+                    return Json(new { ok = false, category = (string?)null, message = "modelo no disponible / sin predicción" });
+                }
+                return Json(new { ok = true, category = cat, message = "ok" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al predecir categoría");
+                return Json(new { ok = false, category = (string?)null, message = "error interno" });
+            }
+        }
+
+        public class PredictionRequest
+        {
+            public string? Descripcion { get; set; }
         }
     }
 }

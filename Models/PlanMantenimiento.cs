@@ -7,10 +7,10 @@ namespace SistemaGestionActivos.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public string Titulo { get; set; }
+    [Required]
+    public string Titulo { get; set; } = string.Empty;
 
-        public string Tarea { get; set; } // Ej: "Limpieza de filtros y revisión de gas"
+    public string Tarea { get; set; } = string.Empty; // Ej: "Limpieza de filtros y revisión de gas"
 
         public FrecuenciaMantenimiento Frecuencia { get; set; }
         public int Intervalo { get; set; } // Ej: si Frecuencia=Mensual e Intervalo=3, es cada 3 meses.
