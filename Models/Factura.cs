@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -8,26 +9,32 @@ namespace SistemaGestionActivos.Models
         [Key]
         public int Id { get; set; }
 
-        // Relación 1:1 con OrdenTrabajo
+        // Relación 1:1 con OrdenDeTrabajo
         [Required]
+        [Column("OrdenTrabajoId")]
         public int OrdenTrabajoId { get; set; }
+
         [ForeignKey("OrdenTrabajoId")]
-        public virtual OrdenDeTrabajo OrdenDeTrabajo { get; set; }
+        public virtual OrdenDeTrabajo? OrdenDeTrabajo { get; set; }
 
         [Required]
         [Display(Name = "Fecha de Emisión")]
+        [Column("FechaEmision")]
         public DateTime FechaEmision { get; set; }
 
         [Required]
-        [Column(TypeName = "decimal(18, 2)")]
+        [Column("MontoTotal", TypeName = "decimal(18, 2)")]
         [Display(Name = "Monto Total")]
         public decimal MontoTotal { get; set; }
 
         [Required]
-        public string Estado { get; set; } // "Pendiente de Pago", "Pagada"
+        [Column("Estado")]
+        public string Estado { get; set; } = string.Empty; // "Pendiente de Pago", "Pagada"
 
-        // Campos para la API de Pagos (Mercado Pago / Stripe)
+        [Column("MetodoPago")]
         public string? MetodoPago { get; set; }
-        public string? PagoIdExterno { get; set; } // ID de la transacción en la API
+
+        [Column("PagoIdExterno")]
+        public string? PagoIdExterno { get; set; }
     }
 }

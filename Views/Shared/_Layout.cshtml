@@ -11,14 +11,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Gestor de Activos</title>
     
-    <!-- CSS de Bootstrap y Font Awesome -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <style>
+        .sidebar-heading {
+            padding: 10px 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8a99aa; /* Un color gris claro que no molesta */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
 </head>
 <body>
     <div id="wrapper">
-        <!-- Sidebar -->
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav nav-pills nav-stacked" id="menu">
                 <li class="sidebar-brand">
@@ -32,13 +41,65 @@
                 
                 @if (SignInManager.IsSignedIn(User))
                 {
-                    <!-- ============================================= -->
-                    <!-- SECCIÓN PARA ADMINS Y GESTORES DE ACTIVOS -->
-                    <!-- ============================================= -->
-                    @if (User.IsInRole("Administrador") || User.IsInRole("Gestor de Activos"))
+                    @if (User.IsInRole("Administrador"))
                     {
+                        <li class="sidebar-heading"><span>Gestión</span></li>
                         <li>
-                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-box fa-stack-1x"></i></span> Gestión de Activos</a>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-box fa-stack-1x"></i></span> Inventario</a>
+                            <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                <li><a asp-controller="Activos" asp-action="Index"> <i class="fa fa-laptop"></i> Inventario Completo</a></li>
+                                <li><a asp-controller="Gestion" asp-action="Categorias"> <i class="fa fa-tags"></i> Categorías</a></li>
+                                <li><a asp-controller="Gestion" asp-action="Ubicaciones"> <i class="fa fa-map-marker"></i> Ubicaciones</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-wrench fa-stack-1x"></i></span> Mantenimiento</a>
+                            <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                <li><a asp-controller="OrdenesDeTrabajo" asp-action="Index"> <i class="fa fa-ticket"></i> Todas las OTs</a></li>
+                                <li><a asp-controller="PlanesMantenimiento" asp-action="Index"> <i class="fa fa-calendar-alt"></i> Planificador</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a asp-controller="Facturacion" asp-action="Index">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-file-invoice-dollar fa-stack-1x"></i></span> Facturación
+                            </a>
+                        </li>
+                        
+                        <li class="sidebar-heading"><span>Portales de Rol</span></li>
+                        <li>
+                            <a asp-controller="OrdenesDeTrabajo" asp-action="MisAsignaciones">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-tasks fa-stack-1x"></i></span> Portal de Técnico
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Activos" asp-action="MisActivos">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-laptop fa-stack-1x"></i></span> Portal de Empleado
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="OrdenesDeTrabajo" asp-action="Crear">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-exclamation-triangle fa-stack-1x"></i></span> Reportar Incidencia
+                            </a>
+                        </li>
+                        <li class="sidebar-heading"><span>Sistema</span></li>
+                        <li>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-users fa-stack-1x"></i></span> Administración</a>
+                            <ul class="nav-pills nav-stacked" style="list-style-type:none;">
+                                <li><a asp-controller="Admin" asp-action="Index"> <i class="fa fa-user-cog"></i> Usuarios y Roles</a></li>
+                                <li><a asp-controller="Admin" asp-action="LogAuditoria"> <i class="fa fa-shield-alt"></i> Log de Auditoría</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a asp-controller="Reportes" asp-action="Index">
+                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-chart-pie fa-stack-1x"></i></span> Reportes
+                            </a>
+                        </li>
+                    }
+                    else if (User.IsInRole("Gestor de Activos"))
+                    {
+                        <li class="sidebar-heading"><span>Gestión</span></li>
+                        <li>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-box fa-stack-1x"></i></span> Inventario</a>
                             <ul class="nav-pills nav-stacked" style="list-style-type:none;">
                                 <li><a asp-controller="Activos" asp-action="Index"> <i class="fa fa-laptop"></i> Inventario Completo</a></li>
                                 <li><a asp-controller="Gestion" asp-action="Categorias"> <i class="fa fa-tags"></i> Categorías</a></li>
@@ -58,35 +119,15 @@
                             </a>
                         </li>
                     }
-
-                    <!-- ============================ -->
-                    <!-- SECCIÓN PARA TÉCNICOS -->
-                    <!-- ============================ -->
-                    @if (User.IsInRole("Técnico"))
+                    else if (User.IsInRole("Técnico"))
                     {
-                        <li>
-                            <a asp-controller="Activos" asp-action="MisActivos">
-                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-laptop fa-stack-1x"></i></span> Mis Activos
-                            </a>
-                        </li>
+                        <li class="sidebar-heading"><span>Mi Trabajo</span></li>
                         <li>
                             <a asp-controller="OrdenesDeTrabajo" asp-action="MisAsignaciones">
                                 <span class="fa-stack fa-lg pull-left"><i class="fa fa-tasks fa-stack-1x"></i></span> Mis OTs Asignadas
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="OrdenesDeTrabajo" asp-action="Crear">
-                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-exclamation-triangle fa-stack-1x"></i></span> Reportar Incidencia
-                            </a>
-                        </li>
-                    }
-
-                    <!-- ============================ -->
-                    <!-- SECCIÓN PARA EMPLEADOS -->
-                    <!-- ============================ -->
-                    @if (User.IsInRole("Empleado"))
-                    {
-                        <li>
                             <a asp-controller="Activos" asp-action="MisActivos">
                                 <span class="fa-stack fa-lg pull-left"><i class="fa fa-laptop fa-stack-1x"></i></span> Mis Activos
                             </a>
@@ -97,28 +138,33 @@
                             </a>
                         </li>
                     }
-
-                    <!-- ============================ -->
-                    <!-- SECCIÓN SOLO PARA ADMINS -->
-                    <!-- ============================ -->
-                    @if (User.IsInRole("Administrador"))
+                    else if (User.IsInRole("Empleado"))
                     {
                         <li>
-                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-users fa-stack-1x"></i></span> Administración</a>
+                            <a href="#"><span class="fa-stack fa-lg pull-left"><i class="fa fa-user fa-stack-1x"></i></span> Mi Portal</a>
                             <ul class="nav-pills nav-stacked" style="list-style-type:none;">
-                                <li><a asp-controller="Admin" asp-action="Index"> <i class="fa fa-user-cog"></i> Usuarios y Roles</a></li>
-                                <li><a asp-controller="Admin" asp-action="LogAuditoria"> <i class="fa fa-shield-alt"></i> Log de Auditoría</a></li>
+                                <li>
+                                    <a asp-controller="Activos" asp-action="MisActivos">
+                                        <i class="fa fa-laptop"></i> Mis Activos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="OrdenesDeTrabajo" asp-action="Crear">
+                                        <i class="fa fa-exclamation-triangle"></i> Reportar Incidencia
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="OrdenesDeTrabajo" asp-action="MisReportes">
+                                        <i class="fa fa-history"></i> Mis Reportes
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                     }
                 }
             </ul>
         </div>
-        <!-- /#sidebar-wrapper -->
-
-        <!-- Contenido de la Página -->
         <div id="page-content-wrapper">
-            <!-- Barra de Navegación Superior -->
             <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
                 <div class="container-fluid">
                     <button class="btn btn-primary" id="menu-toggle">Ocultar/Mostrar Menú</button>
@@ -133,10 +179,7 @@
                 @RenderBody()
             </main>
         </div>
-        <!-- /#page-content-wrapper -->
-    </div>
-    <!-- /#wrapper -->
-
+        </div>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
