@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="IronPdf" Version="2025.10.8" />
+    <PackageReference Include="mercadopago-sdk" Version="2.10.1" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.10" />

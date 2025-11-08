@@ -1,0 +1,54 @@
+@model IEnumerable<SistemaGestionActivos.Models.Activo>
+
+@{
+    ViewData["Title"] = "Mis Activos Asignados";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+        <p>Aquí puedes ver los activos que tienes bajo tu responsabilidad.</p>
+    </div>
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Código de Activo</th>
+                    <th>Nombre del Activo</th>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.cod_act</td>
+                            <td>@item.nom_act</td>
+                            <td>@item.Categoria?.nom_categoria</td>
+                            <td>
+                                <span class="badge @(item.estado == EstadoActivo.Disponible ? "bg-success" : "bg-warning text-dark")">
+                                    @item.estado
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="OrdenesDeTrabajo" asp-action="Crear" asp-route-activoId="@item.cod_act" class="btn btn-danger btn-sm">
+                                    <i class="fa fa-exclamation-triangle me-1"></i> Reportar Problema
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No tienes ningún activo asignado actualmente.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

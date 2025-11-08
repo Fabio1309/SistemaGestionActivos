@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SistemaGestionActivos.Data;
 using SistemaGestionActivos.Models;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization; // Añadido para la seguridad
 
@@ -13,10 +15,12 @@ namespace SistemaGestionActivos.Controllers
     public class ActivosController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<Usuario> _userManager;
 
-        public ActivosController(ApplicationDbContext context)
+        public ActivosController(ApplicationDbContext context, UserManager<Usuario> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: /Activos (Lista de Activos con Filtros)
@@ -194,6 +198,20 @@ namespace SistemaGestionActivos.Controllers
         private bool ActivoExists(int id)
         {
             return _context.Activos.Any(e => e.activo_id == id);
+        }
+        
+        [Authorize(Roles = "Empleado, Técnico, Administrador")]
+        public async Task<IActionResult> MisActivos()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var misActivosAsignados = await _context.Asignaciones
+                .Where(a => a.UsuarioId == userId && a.FechaDevolucion == null)
+                .Include(a => a.Activo) 
+                .Select(a => a.Activo)  
+                .ToListAsync();
+
+            return View(misActivosAsignados);
         }
     }
 }

@@ -45,5 +45,6 @@ namespace SistemaGestionActivos.Models // Asegúrate de que este namespace coinc
         public virtual Usuario? TecnicoAsignado { get; set; }
 
         public virtual ICollection<CostoMantenimiento> Costos { get; set; } = new List<CostoMantenimiento>();
+        public virtual Factura? Factura { get; set; }
     }
 }

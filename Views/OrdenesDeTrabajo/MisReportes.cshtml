@@ -1,0 +1,57 @@
+@model IEnumerable<SistemaGestionActivos.Models.OrdenDeTrabajo>
+
+@{
+    ViewData["Title"] = "Mis Incidencias Reportadas";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+        <p>Aquí puedes ver el estado de las incidencias que has reportado.</p>
+    </div>
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>OT N°</th>
+                    <th>Activo Afectado</th>
+                    <th>Problema Reportado</th>
+                    <th>Fecha de Reporte</th>
+                    <th>Técnico Asignado</th>
+                    <th>Estado Actual</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.Activo?.nom_act</td>
+                            <td>@item.DescripcionProblema</td>
+                            <td>@item.FechaCreacion.ToString("g")</td>
+                            <td>@(item.TecnicoAsignado?.UserName ?? "---")</td>
+                            <td>
+                                @{
+                                    string badgeClass = "bg-secondary";
+                                    if(item.Estado == EstadoOT.Abierta) badgeClass = "bg-warning text-dark";
+                                    else if(item.Estado == EstadoOT.Asignada) badgeClass = "bg-info text-dark";
+                                    else if(item.Estado == EstadoOT.EnProgreso) badgeClass = "bg-primary";
+                                    else if(item.Estado == EstadoOT.Resuelta) badgeClass = "bg-success";
+                                }
+                                <span class="badge @badgeClass">@item.Estado</span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No has reportado ninguna incidencia.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

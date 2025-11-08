@@ -1,0 +1,90 @@
+@model SistemaGestionActivos.Models.Factura
+
+@{
+    ViewData["Title"] = "Detalle de Factura";
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        <strong>Error de API:</strong> @TempData["ErrorMessage"]
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4 class="mb-0">Factura N°: @Model.Id</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Resumen de la Orden de Trabajo (OT-@Model.OrdenTrabajoId)</h5>
+                <ul class="list-group list-group-flush mb-3">
+                    @foreach (var costo in Model.OrdenDeTrabajo.Costos)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @costo.Descripcion
+                            <span>$ @costo.Monto.ToString("N2")</span>
+                        </li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                        <strong>Monto Total</strong>
+                        <strong>$ @Model.MontoTotal.ToString("N2")</strong>
+                    </li>
+                </ul>
+
+                <h6>Información Adicional</h6>
+                <p class="mb-1"><strong>Fecha Emisión:</strong> @Model.FechaEmision.ToString("g")</p>
+                <p class="mb-1"><strong>Estado:</strong> 
+                    @if (Model.Estado == "Pagada")
+                    {
+                        <span class="badge bg-success">@Model.Estado</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">@Model.Estado</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4 class="mb-0">Procesar Pago</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.Estado == "Pagada")
+                {
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <h5 class="alert-heading">Esta factura ya fue pagada.</h5>
+                        <p>ID de Transacción: @Model.PagoIdExterno</p>
+                    </div>
+                }
+                else
+                {
+                    <h5 class="text-center">Pagar con Mercado Pago</h5>
+                    <p class="text-muted text-center">Serás redirigido al sitio seguro de Mercado Pago para completar la transacción (Modo Sandbox).</p>
+                    <div class="d-grid gap-2">
+                        <form asp-controller="Facturacion" asp-action="CrearPreferenciaDePago" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="facturaId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <img src="https://logospng.org/download/mercado-pago/logo-mercado-pago-256.png" height="24" class="me-2" />
+                                Pagar $ @Model.MontoTotal.ToString("N2")
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

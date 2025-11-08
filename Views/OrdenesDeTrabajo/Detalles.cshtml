@@ -1,0 +1,93 @@
+@model SistemaGestionActivos.Models.OrdenDeTrabajo
+@{
+    ViewData["Title"] = "Detalle de Orden de Trabajo";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">OT-@Model.Id (Estado: @Model.Estado)</h4>
+        <a asp-action="Index" class="btn btn-secondary btn-sm">Volver a la Lista</a>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Información General</h5>
+                <p class="mb-1"><strong>Activo:</strong> @Model.Activo?.nom_act (@Model.Activo?.cod_act)</p>
+                <p class="mb-1"><strong>Reportado por:</strong> @(Model.UsuarioReporta?.UserName ?? "N/A")</p>
+                <p class="mb-1"><strong>Fecha Reporte:</strong> @Model.FechaCreacion.ToString("g")</p>
+                <p class="mb-1"><strong>Técnico Asignado:</strong> @(Model.TecnicoAsignado?.UserName ?? "Sin Asignar")</p>
+                <hr />
+                <h5>Descripción del Problema</h5>
+                <p>@Model.DescripcionProblema</p>
+                <hr />
+                <h5>Comentarios del Técnico</h5>
+                <pre class="bg-light p-2 rounded">@(Model.Comentarios ?? "Sin comentarios.")</pre>
+            </div>
+            
+            <div class="col-md-6">
+                <h5>Costos Registrados</h5>
+                <ul class="list-group mb-3">
+                    @foreach (var costo in Model.Costos)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            @costo.Descripcion
+                            <span>$ @costo.Monto.ToString("N2")</span>
+                        </li>
+                    }
+                    @if (!Model.Costos.Any())
+                    {
+                        <li class="list-group-item">No hay costos registrados.</li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between bg-light fw-bold">
+                        <span>TOTAL</span>
+                        <span>$ @Model.Costos.Sum(c => c.Monto).ToString("N2")</span>
+                    </li>
+                </ul>
+                
+                <hr />
+                
+                <h5 class="mb-3">Sección de Facturación</h5>
+                
+                @if (Model.Estado == EstadoOT.Resuelta)
+                {
+                    @if (Model.Factura == null)
+                    {
+                        @if (Model.Costos.Any())
+                        {
+                            <form asp-controller="Facturacion" asp-action="GenerarFactura" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ordenTrabajoId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-success btn-lg w-100">
+                                    <i class="fa fa-file-invoice-dollar me-2"></i> Generar Factura
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <p class="text-warning">Esta OT no tiene costos registrados y no se puede facturar.</p>
+                        }
+                    }
+                    else
+                    {
+                        <a asp-controller="Facturacion" asp-action="Detalles" asp-route-id="@Model.Factura.Id" class="btn btn-info w-100">
+                            Ver Factura Generada (N° @Model.Factura.Id)
+                        </a>
+                    }
+                }
+                else
+                {
+                    <p class="text-danger">La Orden de Trabajo debe estar "Resuelta" para poder generar una factura.</p>
+                }
+                </div>
+        </div>
+    </div>
+</div>
