@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Asistente de IA";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+        <p class="mb-0">Habla con nuestro agente para reportar problemas.</p>
+    </div>
+    <div class="card-body" style="height: 400px; overflow-y: auto;" id="chat-window">
+        <div class="alert alert-info">Hola, soy tu asistente. ¿En qué puedo ayudarte hoy?</div>
+    </div>
+    <div class="card-footer">
+        @* Anti-forgery token para las peticiones fetch *@
+        @Html.AntiForgeryToken()
+        <div class="input-group">
+            <input type="text" id="userInput" class="form-control" placeholder="Escribe tu mensaje..." />
+            <button class="btn btn-primary" id="sendButton">
+                <i class="fa fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById("sendButton").addEventListener("click", enviarMensaje);
+    document.getElementById("userInput").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            enviarMensaje();
+        }
+    });
+
+    async function enviarMensaje() {
+        const input = document.getElementById("userInput");
+        const chatWindow = document.getElementById("chat-window");
+        const prompt = input.value;
+        if (!prompt) return;
+
+        // Mostrar mensaje del usuario
+        chatWindow.innerHTML += `<div class="alert alert-light text-end"><strong>Tú:</strong> ${prompt}</div>`;
+        input.value = "";
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        // Enviar al controlador
+        let tokenEl = document.getElementsByName('__RequestVerificationToken')[0];
+        let token = tokenEl ? tokenEl.value : null;
+
+        const response = await fetch('@Url.Action("EnviarMensaje", "Agente")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'RequestVerificationToken': token } : {})
+            },
+            body: JSON.stringify({ Prompt: prompt })
+        });
+
+        if (!response.ok) {
+            chatWindow.innerHTML += `<div class="alert alert-danger"><strong>Agente:</strong> Error en la petición (${response.status})</div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return;
+        }
+
+        const data = await response.json();
+
+        // Mostrar respuesta de la IA. El controlador devuelve { ok: true, respuesta: '...' } o { ok: false, error: '...'}
+        if (data && data.ok) {
+            chatWindow.innerHTML += `<div class="alert alert-info"><strong>Agente:</strong> ${data.respuesta}</div>`;
+        } else {
+            const err = data && data.error ? data.error : 'No se recibió respuesta del servicio de IA.';
+            chatWindow.innerHTML += `<div class="alert alert-warning"><strong>Agente:</strong> ${err}</div>`;
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+</script>
+}

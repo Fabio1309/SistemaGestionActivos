@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.ML;
+using System.IO;
 using Microsoft.EntityFrameworkCore;
 using SistemaGestionActivos.Data;
 using SistemaGestionActivos.Models;
 using SistemaGestionActivos.Services;
+using SistemaGestionActivos.Plugins;
+using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +39,34 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHostedService<MantenimientoSchedulerService>();
 
 builder.Services.AddScoped<ILogService, LogService>();
+
+// Registrar PredictionEnginePool si existe el modelo copiado en wwwroot/models/Model.zip
+var modelPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "models", "Model.zip");
+if (File.Exists(modelPath))
+{
+    // Registrar el pool y cargar el modelo nombrado "mlModel"
+    builder.Services.AddPredictionEnginePool<TicketDataML, TicketPredictionML>()
+        .FromFile(modelName: "mlModel", filePath: modelPath, watchForChanges: false);
+}
+else
+{
+    // Si no existe, no registramos el pool; el servicio hará fallback cargando Model.zip desde rutas alternativas.
+    Console.WriteLine($"Warning: Model.zip no encontrado en {modelPath}. PredictionEnginePool no será registrado.");
+}
+
+// Registrar servicio de predicción (usa pool si está disponible, sino fallback)
+builder.Services.AddSingleton<SistemaGestionActivos.Services.ICategoryPredictionService, SistemaGestionActivos.Services.CategoryPredictionService>();
+
+builder.Services.AddKernel();
+// Read model id from configuration, fallback to a broadly available model if not set
+var openAiModel = builder.Configuration["OpenAI:Model"] ?? "gpt-3.5-turbo";
+builder.Services.AddOpenAIChatCompletion(
+    modelId: openAiModel,
+    apiKey: builder.Configuration["OpenAI:ApiKey"] // <-- Pon tu clave en appsettings.json o en variables de entorno
+);
+// OrdenDeTrabajoPlugin depende de servicios con lifetime 'scoped' (ApplicationDbContext, UserManager)
+// por eso debe registrarse como Scoped (no Singleton) para evitar "Cannot consume scoped service ... from singleton".
+builder.Services.AddScoped<OrdenDeTrabajoPlugin>();
 
 var app = builder.Build();
 

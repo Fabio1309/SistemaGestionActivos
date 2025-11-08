@@ -8,8 +8,8 @@ namespace SistemaGestionActivos.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public string Descripcion { get; set; }
+    [Required]
+    public string Descripcion { get; set; } = string.Empty;
 
         [Required]
         [Column(TypeName = "decimal(18, 2)")]

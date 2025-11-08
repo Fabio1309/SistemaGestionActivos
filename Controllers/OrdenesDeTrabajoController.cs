@@ -7,19 +7,27 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace SistemaGestionActivos.Controllers
 {
     [Authorize]
     public class OrdenesDeTrabajoController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<Usuario> _userManager;
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<Usuario> _userManager;
+    private readonly IConfiguration _configuration;
+    private readonly SistemaGestionActivos.Services.ICategoryPredictionService _predictor;
+    private readonly ILogger<OrdenesDeTrabajoController> _logger;
 
-        public OrdenesDeTrabajoController(ApplicationDbContext context, UserManager<Usuario> userManager)
+        public OrdenesDeTrabajoController(ApplicationDbContext context, UserManager<Usuario> userManager, IConfiguration configuration, SistemaGestionActivos.Services.ICategoryPredictionService predictor, ILogger<OrdenesDeTrabajoController> logger)
         {
             _context = context;
             _userManager = userManager;
+            _configuration = configuration;
+            _predictor = predictor;
+            _logger = logger;
         }
 
         // GET: /OrdenesDeTrabajo
@@ -53,6 +61,7 @@ namespace SistemaGestionActivos.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // --- 1. Guardar la Asignación (Tu código original) ---
             var ordenDeTrabajo = await _context.OrdenesDeTrabajo.FindAsync(id);
 
             if (ordenDeTrabajo == null || ordenDeTrabajo.Estado != EstadoOT.Abierta)
@@ -65,7 +74,47 @@ namespace SistemaGestionActivos.Controllers
             ordenDeTrabajo.Estado = EstadoOT.Asignada; 
             
             _context.Update(ordenDeTrabajo);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // <-- Se guardan los cambios
+            
+            // --- 2. Inicia la Lógica de Notificación (API SendGrid) ---
+            try
+            {
+                // Obtenemos los datos necesarios para el email
+                var tecnico = await _userManager.FindByIdAsync(tecnicoAsignadoId);
+                var activo = await _context.Activos.FindAsync(ordenDeTrabajo.ActivoId);
+
+                if (tecnico != null && activo != null && !string.IsNullOrEmpty(tecnico.Email))
+                {
+                    // Lee la API Key desde tu appsettings.json
+                    var apiKey = _configuration["SendGrid:ApiKey"];
+                    var client = new SendGridClient(apiKey);
+                    
+                    // Usa tu email verificado como remitente
+                    var from = new EmailAddress("jarethtrujilloticse@gmail.com", "Sistema Gestor de Activos");
+                    var to = new EmailAddress(tecnico.Email, tecnico.NombreCompleto);
+                    var subject = $"Nueva OT Asignada: OT-{ordenDeTrabajo.Id}";
+                    var htmlContent = $@"
+                        <strong>Hola {tecnico.NombreCompleto},</strong>
+                        <p>Se te ha asignado una nueva orden de trabajo (OT-{ordenDeTrabajo.Id}).</p>
+                        <hr>
+                        <p><strong>Activo:</strong> {activo.nom_act} ({activo.cod_act})</p>
+                        <p><strong>Problema reportado:</strong> {ordenDeTrabajo.DescripcionProblema}</p>
+                        <hr>
+                        <p>Por favor, ingresa al sistema para ver los detalles.</p>";
+                    
+                    var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlContent);
+                    
+                    // Envía el email en segundo plano (no esperamos la respuesta para no bloquear al usuario)
+                    _ = client.SendEmailAsync(msg);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Si el email falla, no detenemos la aplicación.
+                // Opcional: registrar este 'ex' en tu Log de Auditoría.
+                Console.WriteLine($"Error al enviar email de notificación: {ex.Message}");
+            }
+            // --- Fin de la Lógica de Notificación ---
             
             TempData["SuccessMessage"] = "Orden de Trabajo ha sido asignada con éxito.";
             return RedirectToAction(nameof(Index));
@@ -156,6 +205,20 @@ namespace SistemaGestionActivos.Controllers
 
             if (ModelState.IsValid)
             {
+                // Usar el servicio de ML para predecir la categoría sugerida (no se persiste en BD por ahora)
+                try
+                {
+                    var predicted = _predictor.PredictCategory(ordenDeTrabajo.DescripcionProblema);
+                    if (!string.IsNullOrEmpty(predicted))
+                    {
+                        TempData["PredictedCategory"] = predicted;
+                    }
+                }
+                catch
+                {
+                    // No interrumpir si ML falla
+                }
+
                 var activo = await _context.Activos.FindAsync(ordenDeTrabajo.ActivoId);
                 if (activo != null && activo.estado == EstadoActivo.Disponible)
                 {
@@ -396,6 +459,45 @@ namespace SistemaGestionActivos.Controllers
                 .ToListAsync();
 
             return View(misReportes);
+        }
+
+        // POST: /OrdenesDeTrabajo/PredictCategory
+        // Endpoint simple para AJAX: enviar JSON { "descripcion": "texto..." }
+        [HttpPost]
+        public IActionResult PredictCategory([FromBody] PredictionRequest request)
+        {
+            if (request == null)
+            {
+                _logger.LogDebug("PredictCategory called with null request");
+                return Json(new { ok = false, category = (string?)null, message = "payload missing" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Descripcion))
+            {
+                _logger.LogDebug("PredictCategory called with empty description");
+                return Json(new { ok = false, category = (string?)null, message = "descripcion vacía" });
+            }
+
+            try
+            {
+                var cat = _predictor.PredictCategory(request.Descripcion);
+                if (cat == null)
+                {
+                    _logger.LogInformation("PredictCategory: modelo no disponible o no pudo predecir para: {Text}", request.Descripcion);
+                    return Json(new { ok = false, category = (string?)null, message = "modelo no disponible / sin predicción" });
+                }
+                return Json(new { ok = true, category = cat, message = "ok" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al predecir categoría");
+                return Json(new { ok = false, category = (string?)null, message = "error interno" });
+            }
+        }
+
+        public class PredictionRequest
+        {
+            public string? Descripcion { get; set; }
         }
     }
 }

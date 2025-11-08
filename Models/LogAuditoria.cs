@@ -9,15 +9,15 @@ namespace SistemaGestionActivos.Models
         public int Id { get; set; }
 
         // --- Quién lo hizo ---
-        [Required]
-        public string UsuarioId { get; set; } 
-        [ForeignKey("UsuarioId")]
-        public virtual Usuario Usuario { get; set; }
+    [Required]
+    public string UsuarioId { get; set; } = string.Empty;
+    [ForeignKey("UsuarioId")]
+    public virtual Usuario? Usuario { get; set; }
 
         // --- Qué hizo ---
-        [Required]
-        [Display(Name = "Acción Realizada")]
-        public string Accion { get; set; } // Ej: "Eliminó el activo", "Cambió el rol de"
+    [Required]
+    [Display(Name = "Acción Realizada")]
+    public string Accion { get; set; } = string.Empty; // Ej: "Eliminó el activo", "Cambió el rol de"
 
         // --- A qué se lo hizo (Opcional) ---
         [Display(Name = "Entidad Afectada")]
