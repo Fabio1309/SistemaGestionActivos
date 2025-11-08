@@ -74,7 +74,8 @@ namespace SistemaGestionActivos.Controllers
         // --- MÉTODOS PARA CREAR UNA NUEVA ORDEN DE TRABAJO ---
 
         // GET: OrdenesDeTrabajo/Crear/5
-        // (Esta es la que ya tenías, se llama desde "Mis Activos")
+        // (Esta se llama desde "Mis Activos" o "Detalles del Activo")
+        [Authorize(Roles = "Empleado, Técnico, Administrador")]
         public async Task<IActionResult> Crear(int activoId)
         {
             var activo = await _context.Activos.FindAsync(activoId);
@@ -99,26 +100,23 @@ namespace SistemaGestionActivos.Controllers
             return View(ordenDeTrabajo);
         }
 
-        // ===== INICIO DE LA ACCIÓN FALTANTE =====
-        // GET: OrdenesDeTrabajo/Crear
+        // ===== INICIO DE LA CORRECCIÓN =====
+        // GET: OrdenesDeTrabajo/Reportar
         // (Esta es la nueva acción que se llama desde el menú lateral)
         [Authorize(Roles = "Empleado, Técnico, Administrador")]
-        public async Task<IActionResult> Crear()
+        public async Task<IActionResult> Reportar() // <-- RENOMBRADA DE "Crear" a "Reportar"
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             List<Activo> activosDisponibles;
 
-            // Si es Admin, puede reportar sobre CUALQUIER activo
             if (User.IsInRole("Administrador"))
             {
-                // Mostrar todos los activos que no están dados de baja (DeBaja)
                 activosDisponibles = await _context.Activos
-                    .Where(a => a.estado != EstadoActivo.DeBaja)
+                    .Where(a => a.estado != EstadoActivo.DeBaja) 
                     .ToListAsync();
             }
             else
             {
-                // Si es Empleado o Técnico, carga solo los activos asignados a él
                 var asignaciones = await _context.Asignaciones
                     .Where(a => a.UsuarioId == userId && a.FechaDevolucion == null)
                     .Include(a => a.Activo)
@@ -130,14 +128,13 @@ namespace SistemaGestionActivos.Controllers
                     .ToList();
             }
 
-            // Pasamos la lista de activos al dropdown
             // El campo PK de Activo en la entidad es 'activo_id'
             ViewData["ActivoId"] = new SelectList(activosDisponibles, "activo_id", "nom_act");
             
-            // Pasamos la vista "Crear.cshtml" (la que te di en el mensaje anterior)
-            return View(new OrdenDeTrabajo());
+            // Le decimos que use la vista "Crear.cshtml"
+            return View("Crear", new OrdenDeTrabajo());
         }
-        // ===== FIN DE LA ACCIÓN FALTANTE =====
+        // ===== FIN DE LA CORRECCIÓN =====
 
         // POST: OrdenesDeTrabajo/Crear
         [HttpPost]
@@ -171,19 +168,17 @@ namespace SistemaGestionActivos.Controllers
                 
                 TempData["SuccessMessage"] = "La orden de trabajo se ha creado y enviado para su gestión.";
                 
-                // Si es empleado, lo mandamos a sus reportes
                 if (User.IsInRole("Empleado"))
                 {
                      return RedirectToAction(nameof(MisReportes));
                 }
-                // Si es admin, lo mandamos al detalle del activo
-                return RedirectToAction("Detalles", "Activos", new { id = ordenDeTrabajo.ActivoId });
+                
+                return RedirectToAction("Index", "Home");
             }
 
             // Si el modelo no es válido, recargamos la data necesaria
             if(ViewBag.NombreActivo == null)
             {
-                // Si falló viniendo desde el menú (con el dropdown)
                 var userIdForm = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 List<Activo> activosDisponibles;
                 if (User.IsInRole("Administrador"))
@@ -206,7 +201,6 @@ namespace SistemaGestionActivos.Controllers
             }
             else
             {
-                // Si falló viniendo desde el detalle del activo (sin dropdown)
                  var activoParaRecarga = await _context.Activos.FindAsync(ordenDeTrabajo.ActivoId);
                 if (activoParaRecarga != null)
                 {
@@ -229,7 +223,6 @@ namespace SistemaGestionActivos.Controllers
 
             IQueryable<OrdenDeTrabajo> query = _context.OrdenesDeTrabajo;
 
-            // Si no es admin, filtramos solo por su ID
             if (!User.IsInRole("Administrador"))
             {
                  query = query.Where(o => o.TecnicoAsignadoId == userId);
@@ -255,7 +248,6 @@ namespace SistemaGestionActivos.Controllers
             
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Validamos que sea su OT, O que sea un Admin
             if (ordenDeTrabajo == null || (ordenDeTrabajo.TecnicoAsignadoId != userId && !User.IsInRole("Administrador")))
             {
                 TempData["ErrorMessage"] = "No tiene permiso para actualizar esta Orden de Trabajo.";
@@ -304,7 +296,7 @@ namespace SistemaGestionActivos.Controllers
                         var otrasOTsAbiertas = await _context.OrdenesDeTrabajo
                             .AnyAsync(o => o.ActivoId == ordenDeTrabajo.ActivoId && 
                                            o.Id != ordenDeTrabajo.Id && 
-                                           o.Estado != EstadoOT.Resuelta);
+                                           o.Estado != EstadoOT.Resuelta); 
 
                         if (!otrasOTsAbiertas)
                         {
@@ -392,7 +384,6 @@ namespace SistemaGestionActivos.Controllers
             
             IQueryable<OrdenDeTrabajo> query = _context.OrdenesDeTrabajo;
 
-            // Si no es admin, filtramos solo por su ID
             if (!User.IsInRole("Administrador"))
             {
                 query = query.Where(o => o.UsuarioReportaId == userId);

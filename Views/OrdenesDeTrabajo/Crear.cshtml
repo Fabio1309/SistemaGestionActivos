@@ -1,31 +1,46 @@
 ﻿@model SistemaGestionActivos.Models.OrdenDeTrabajo
-@{ ViewData["Title"] = "Reportar Problema"; }
 
-<h1>Reportar un Problema</h1>
-<h4>Activo: <strong>@ViewBag.NombreActivo (@ViewBag.CodigoActivo)</strong></h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Crear">
+@{
+    ViewData["Title"] = "Reportar Incidencia";
+    // Verificamos si el controlador nos envió un nombre de activo (Flujo 1)
+    bool esActivoEspecifico = ViewBag.NombreActivo != null;
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Crear" method="post">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-            <!-- Campo oculto para mantener la referencia al activo -->
-            <input type="hidden" asp-for="ActivoId" />
+            @if (esActivoEspecifico)
+            {
+                <h5>Activo Afectado: <strong>@ViewBag.NombreActivo (@ViewBag.CodigoActivo)</strong></h5>
+                <input type="hidden" asp-for="ActivoId" />
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label asp-for="ActivoId" class="form-label">Activo Afectado</label>
+                    <select asp-for="ActivoId" class="form-select" asp-items="@ViewData["ActivoId"] as SelectList">
+                        <option value="">-- Seleccione uno de sus activos --</option>
+                    </select>
+                    <span asp-validation-for="ActivoId" class="text-danger"></span>
+                </div>
+            }
 
-            <div class="form-group mb-3">
-                <label asp-for="DescripcionProblema" class="control-label">Describa el problema detalladamente</label>
-                <textarea asp-for="DescripcionProblema" class="form-control" rows="5"></textarea>
+            <div class="mb-3">
+                <label asp-for="DescripcionProblema" class="form-label"></label>
+                <textarea asp-for="DescripcionProblema" class="form-control" rows="5" placeholder="Describe el problema con el mayor detalle posible..."></textarea>
                 <span asp-validation-for="DescripcionProblema" class="text-danger"></span>
             </div>
 
-            <div class="form-group">
-                <input type="submit" value="Crear Orden de Trabajo" class="btn btn-danger" />
-                <a asp-controller="Activos" asp-action="Details" asp-route-id="@Model.ActivoId" class="btn btn-secondary">Cancelar</a>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-danger">Enviar Reporte</button>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
 </div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
