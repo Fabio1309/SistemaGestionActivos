@@ -1,0 +1,73 @@
+@model IEnumerable<SistemaGestionActivos.Models.LogAuditoria>
+
+@{
+    ViewData["Title"] = "Log de Auditoría";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+    </div>
+    <div class="card-body">
+        
+        <div class="list-group list-group-flush">
+            
+            @if (Model.Any())
+            {
+                @foreach (var log in Model)
+                {
+                    <div class="list-group-item d-flex align-items-center p-3">
+                        
+                        <!-- Lógica de Iconos -->
+                        @{
+                            string iconClass = "fa-info-circle";
+                            string iconColor = "text-secondary";
+
+                            if (log.Accion.Contains("Elimin") || log.Accion.Contains("Desactivó")) {
+                                iconClass = "fa-trash-alt";
+                                iconColor = "text-danger";
+                            }
+                            else if (log.Accion.Contains("Cerró") || log.Accion.Contains("Activó")) {
+                                iconClass = "fa-check-circle";
+                                iconColor = "text-success";
+                            }
+                            else if (log.Accion.Contains("cambió el rol") || log.Accion.Contains("Creó") || log.Accion.Contains("Editó")) {
+                                iconClass = "fa-user-edit";
+                                iconColor = "text-primary";
+                            }
+                        }
+                        
+                        <div class="me-3">
+                            <span class="fa-stack fa-lg">
+                                <i class="fas fa-circle fa-stack-2x @iconColor opacity-25"></i>
+                                <i class="fas @iconClass fa-stack-1x @iconColor"></i>
+                            </span>
+                        </div>
+                        
+                        <!-- Texto del Log -->
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">
+                                @(log.Usuario?.UserName ?? "Usuario no encontrado") 
+                                
+                                <!-- Texto de la acción -->
+                                @log.Accion 
+                                
+                                <!-- Entidad (si existe) -->
+                                @if (!string.IsNullOrEmpty(log.EntidadId))
+                                {
+                                    <span class="text-primary">@log.EntidadId</span>
+                                }
+                            </div>
+                            <small class="text-muted">@log.FechaHora.ToString("g")</small>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted p-3">No hay entradas en el log de auditoría.</p>
+            }
+            
+        </div>
+    </div>
+</div>

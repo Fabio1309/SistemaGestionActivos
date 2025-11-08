@@ -100,11 +100,6 @@
                                 <li><a asp-controller="Admin" asp-action="LogAuditoria"> <i class="fa fa-shield-alt"></i> Log de Auditoría</a></li>
                             </ul>
                         </li>
-                        <li>
-                            <a asp-controller="Reportes" asp-action="Index">
-                                <span class="fa-stack fa-lg pull-left"><i class="fa fa-chart-pie fa-stack-1x"></i></span> Reportes
-                            </a>
-                        </li>
                     }
                     else if (User.IsInRole("Gestor de Activos"))
                     {
