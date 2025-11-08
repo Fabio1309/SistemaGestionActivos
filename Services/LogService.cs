@@ -1,25 +1,26 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using SistemaGestionActivos.Data;
 using SistemaGestionActivos.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace SistemaGestionActivos.Services
 {
     public class LogService : ILogService
     {
-        // Pedimos una 'fabrica' de DbContext para no interferir
-        // con las operaciones de los controladores.
-        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public LogService(IDbContextFactory<ApplicationDbContext> contextFactory)
+        public LogService(IServiceScopeFactory scopeFactory)
         {
-            _contextFactory = contextFactory;
+            _scopeFactory = scopeFactory;
         }
 
         public async Task RegistrarLogAsync(string usuarioId, string accion, string? entidad = null, string? entidadId = null)
         {
-            // Creamos un nuevo DbContext solo para esta operación
-            using (var context = _contextFactory.CreateDbContext())
+            using (var scope = _scopeFactory.CreateScope())
             {
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
                 var log = new LogAuditoria
                 {
                     UsuarioId = usuarioId,

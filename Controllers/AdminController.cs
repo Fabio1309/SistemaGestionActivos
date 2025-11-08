@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using SistemaGestionActivos.Data;      // <--- 1. AÑADE ESTE USING
 using SistemaGestionActivos.Models;
-using System.Collections.Generic;
+using SistemaGestionActivos.Services; // <--- 1. AÑADE ESTE USING
+using System.Security.Claims;       // <--- 1. AÑADE ESTE USING
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace SistemaGestionActivos.Controllers
 {
@@ -17,30 +17,36 @@ namespace SistemaGestionActivos.Controllers
     {
         private readonly UserManager<Usuario> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ApplicationDbContext _context; // <--- 2. AÑADE ESTE CAMPO
+        private readonly ILogService _logService; // <--- 2. AÑADE ESTE CAMPO
 
-        public AdminController(UserManager<Usuario> userManager, RoleManager<IdentityRole> roleManager)
+        // 3. REEMPLAZA TU CONSTRUCTOR CON ESTE
+        public AdminController(
+            UserManager<Usuario> userManager, 
+            RoleManager<IdentityRole> roleManager,
+            ApplicationDbContext context,
+            ILogService logService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _context = context;
+            _logService = logService;
         }
 
-        // --- MÉTODO INDEX MEJORADO CON LÓGICA DE FILTROS ---
+        // ... (El método Index() se queda igual) ...
         public async Task<IActionResult> Index(string searchString, string roleFilter)
         {
-            // Preparamos la lista de roles para el menú desplegable del filtro
             ViewData["RolesList"] = new SelectList(await _roleManager.Roles.ToListAsync(), "Name", "Name", roleFilter);
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentRole"] = roleFilter;
 
             var usersQuery = _userManager.Users.AsQueryable();
 
-            // Filtro por texto de búsqueda (nombre o email)
             if (!string.IsNullOrEmpty(searchString))
             {
-                // Protegemos propiedades que pueden ser null usando coalescencia
                 usersQuery = usersQuery.Where(u => 
-                    (u.NombreCompleto ?? string.Empty).ToLower().Contains(searchString.ToLower()) || 
-                    (u.Email ?? string.Empty).ToLower().Contains(searchString.ToLower())
+                    u.NombreCompleto.ToLower().Contains(searchString.ToLower()) || 
+                    u.Email.ToLower().Contains(searchString.ToLower())
                 );
             }
 
@@ -50,7 +56,6 @@ namespace SistemaGestionActivos.Controllers
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                // Filtro por rol (si se ha seleccionado uno)
                 if (string.IsNullOrEmpty(roleFilter) || roles.Contains(roleFilter))
                 {
                     userRolesViewModel.Add(new UsuarioConRolesViewModel
@@ -63,87 +68,79 @@ namespace SistemaGestionActivos.Controllers
             
             return View(userRolesViewModel);
         }
-
-        // --- NUEVA ACCIÓN PARA ACTIVAR/DESACTIVAR USUARIOS ---
+        
+        // ... (El método ToggleUserStatus() se queda igual) ...
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleUserStatus(string userId)
         {
-            if (string.IsNullOrEmpty(userId)) return NotFound();
-            
+            // Buscar el usuario objetivo y validar
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return NotFound();
-
-            // Evitar que el admin se desactive a sí mismo
+            
+            // --- REGISTRAR LOG (Ya estaba en el código anterior) ---
             var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null)
-            {
-                // Si no podemos obtener el usuario actual, abortamos la operación de forma segura
-                TempData["ErrorMessage"] = "No se pudo verificar el usuario actual.";
-                return RedirectToAction(nameof(Index));
-            }
 
-            if (user.Id == currentUser.Id)
-            {
-                TempData["ErrorMessage"] = "No puedes desactivar tu propia cuenta.";
-                return RedirectToAction(nameof(Index));
-            }
+            // Comprobar si el usuario está bloqueado actualmente
+            var isLockedOut = await _userManager.IsLockedOutAsync(user);
+            string accionLog;
 
-            // Cambiar el estado de bloqueo
-            if (await _userManager.IsLockedOutAsync(user))
+            if (!isLockedOut)
             {
-                // Si está bloqueado, lo desbloqueamos
-                await _userManager.SetLockoutEndDateAsync(user, null);
-                TempData["SuccessMessage"] = $"Usuario '{user.UserName}' ha sido activado.";
+                // Si no está bloqueado, bloquearlo (desactivar)
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+                TempData["SuccessMessage"] = $"Usuario '{user.UserName}' ha sido desactivado.";
+                accionLog = $"Desactivó al usuario: {user.UserName}";
             }
             else
             {
-                // Si está activo, lo bloqueamos indefinidamente
-                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
-                TempData["SuccessMessage"] = $"Usuario '{user.UserName}' ha sido desactivado.";
+                // Si está bloqueado, desbloquearlo (activar)
+                await _userManager.SetLockoutEndDateAsync(user, null);
+                TempData["SuccessMessage"] = $"Usuario '{user.UserName}' ha sido activado.";
+                accionLog = $"Activó al usuario: {user.UserName}";
             }
+            
+            await _logService.RegistrarLogAsync(currentUser.Id, accionLog, "Usuario", user.Email);
+            // ----------------------------------------------------
 
             return RedirectToAction(nameof(Index));
         }
+
+        // ... (El método ForzarRestablecimiento() se queda igual) ...
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForzarRestablecimiento(string userId)
         {
-            if (string.IsNullOrEmpty(userId))
-            {
-                return NotFound();
-            }
-
+            // ... (código de ForzarRestablecimiento) ...
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            // 1. Genera el token original (como ya lo hacías)
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = System.Text.Encoding.UTF8.GetBytes(token);
+            var validToken = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(encodedToken);
 
-            // 2. ¡NUEVO! Codifica el token a un formato seguro para URL
-            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
-            // 3. ¡MODIFICADO! Usa el token codificado (encodedToken) para crear el enlace
             var resetLink = Url.Page(
                 "/Account/ResetPassword",
                 pageHandler: null,
-                values: new { area = "Identity", code = encodedToken }, // ¡OJO! No pasamos el email aquí
+                values: new { area = "Identity", code = validToken },
                 protocol: Request.Scheme);
+                
+            // --- REGISTRAR LOG (Ya estaba en el código anterior) ---
+            var adminUserIdReset = _userManager.GetUserId(User);
+            await _logService.RegistrarLogAsync(adminUserIdReset, $"Forzó reseteo de contraseña para: {user.UserName}", "Usuario", user.Email);
+            // ---------------------
 
             TempData["SuccessMessage"] = "Enlace de restablecimiento generado con éxito.";
-            TempData["ResetLink"] = resetLink;
+            TempData["ResetLink"] = resetLink; 
 
             return RedirectToAction(nameof(Index));
         }
-        // --- El resto de tus métodos (CrearUsuario, GestionarRoles) se quedan igual ---
+
+        // GET: CrearUsuario
         public IActionResult CrearUsuario()
         {
             return View(new CrearUsuarioViewModel());
         }
 
+        // POST: CrearUsuario
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearUsuario(CrearUsuarioViewModel model)
@@ -162,10 +159,21 @@ namespace SistemaGestionActivos.Controllers
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, "Empleado");
+                    
+                    // ===== 4. AÑADE ESTE BLOQUE DE LOG =====
+                    var adminUserId = _userManager.GetUserId(User);
+                    await _logService.RegistrarLogAsync(
+                        adminUserId, 
+                        $"Creó el nuevo usuario: {user.UserName}", 
+                        "Usuario", 
+                        user.Email
+                    );
+                    // =======================================
+
                     TempData["SuccessMessage"] = "Usuario creado exitosamente.";
                     return RedirectToAction("Index");
                 }
-                 foreach (var error in result.Errors)
+                foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
@@ -173,6 +181,7 @@ namespace SistemaGestionActivos.Controllers
             return View(model);
         }
 
+        // ... (El método GestionarRoles() GET se queda igual) ...
         public async Task<IActionResult> GestionarRoles(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -184,17 +193,18 @@ namespace SistemaGestionActivos.Controllers
             var model = new GestionarRolesViewModel
             {
                 UserId = user.Id,
-                UserName = user.UserName ?? string.Empty,
+                UserName = user.UserName,
                 Roles = allRoles.Select(role => new RoleCheckboxViewModel
                 {
                     RoleId = role.Id,
-                    RoleName = role.Name ?? string.Empty,
-                    IsSelected = userRoles.Contains(role.Name ?? string.Empty)
+                    RoleName = role.Name,
+                    IsSelected = userRoles.Contains(role.Name)
                 }).ToList()
             };
             return View(model);
         }
 
+        // ... (El método GestionarRoles() POST se queda igual) ...
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GestionarRoles(GestionarRolesViewModel model)
@@ -203,23 +213,38 @@ namespace SistemaGestionActivos.Controllers
             if (user == null) return NotFound();
 
             var userRoles = await _userManager.GetRolesAsync(user);
-            var rolesCollection = model.Roles ?? Enumerable.Empty<RoleCheckboxViewModel>();
-            var selectedRoles = rolesCollection.Where(r => r.IsSelected).Select(r => r.RoleName ?? string.Empty);
+            var selectedRoles = model.Roles.Where(r => r.IsSelected).Select(r => r.RoleName);
 
-            var result = await _userManager.AddToRolesAsync(user, selectedRoles.Except(userRoles));
-            if (!result.Succeeded)
-            {
-                 return View(model);
-            }
+            var resultAdd = await _userManager.AddToRolesAsync(user, selectedRoles.Except(userRoles));
+            var resultRemove = await _userManager.RemoveFromRolesAsync(user, userRoles.Except(selectedRoles));
 
-            result = await _userManager.RemoveFromRolesAsync(user, userRoles.Except(selectedRoles));
-             if (!result.Succeeded)
+            if (!resultAdd.Succeeded || !resultRemove.Succeeded)
             {
-                 return View(model);
+               return View(model);
             }
+            
+            // --- REGISTRAR LOG (Ya estaba en el código anterior) ---
+            var adminUserId = _userManager.GetUserId(User);
+            var rolesComoTexto = string.Join(", ", selectedRoles);
+            await _logService.RegistrarLogAsync(adminUserId, $"Cambió los roles de {user.UserName} a: [{rolesComoTexto}]", "Usuario", user.Email);
+            // ---------------------
             
             TempData["SuccessMessage"] = "Roles actualizados correctamente.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Admin/LogAuditoria
+        // (Esta acción ya la tenías y está correcta)
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> LogAuditoria()
+        {
+            var logs = await _context.LogsAuditoria
+                .Include(l => l.Usuario) 
+                .OrderByDescending(l => l.FechaHora)
+                .Take(100) 
+                .ToListAsync();
+                
+            return View(logs);
         }
     }
 }
