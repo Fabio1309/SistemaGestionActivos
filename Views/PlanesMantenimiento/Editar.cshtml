@@ -1,0 +1,67 @@
+@model SistemaGestionActivos.Models.PlanMantenimiento
+@using SistemaGestionActivos.Models
+
+@{
+    ViewData["Title"] = "Editar Plan de Mantenimiento";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">@ViewData["Title"]</h4>
+    </div>
+    <div class="card-body">
+        
+        <form asp-action="Editar" method="post">
+        @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Titulo" class="form-label"></label>
+                    <input asp-for="Titulo" class="form-control" />
+                    <span asp-validation-for="Titulo" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Tarea" class="form-label"></label>
+                    <input asp-for="Tarea" class="form-control" />
+                    <span asp-validation-for="Tarea" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Frecuencia" class="form-label"></label>
+                    <select asp-for="Frecuencia" class="form-select" asp-items="Html.GetEnumSelectList<FrecuenciaMantenimiento>()"></select>
+                    <span asp-validation-for="Frecuencia" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Intervalo" class="form-label"></label>
+                    <input asp-for="Intervalo" class="form-control" type="number" />
+                    <span asp-validation-for="Intervalo" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="FechaProximaEjecucion" class="form-label"></label>
+                    <input asp-for="FechaProximaEjecucion" class="form-control" type="date" />
+                    <span asp-validation-for="FechaProximaEjecucion" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="CategoriaId" class="form-label">Categoría</label>
+                    <select asp-for="CategoriaId" class="form-select" asp-items="@ViewData["CategoriaId"] as SelectList">
+                        <option value="">-- Sin Categoría --</option>
+                    </select>
+                    <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
