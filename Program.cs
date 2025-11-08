@@ -34,6 +34,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddHostedService<MantenimientoSchedulerService>();
 
+builder.Services.AddScoped<ILogService, LogService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

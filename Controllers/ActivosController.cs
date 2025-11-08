@@ -7,32 +7,34 @@ using SistemaGestionActivos.Models;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization; // Añadido para la seguridad
+using Microsoft.AspNetCore.Authorization;
+using SistemaGestionActivos.Services; // <-- 1. AÑADE ESTE USING
 
 namespace SistemaGestionActivos.Controllers
 {
-    [Authorize] // Protegemos todo el controlador por defecto
+    [Authorize] 
     public class ActivosController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Usuario> _userManager;
+        private readonly ILogService _logService; // <-- 2. AÑADE EL SERVICIO DE LOG
 
-        public ActivosController(ApplicationDbContext context, UserManager<Usuario> userManager)
+        // 3. MODIFICA EL CONSTRUCTOR PARA INYECTAR EL SERVICIO
+        public ActivosController(ApplicationDbContext context, UserManager<Usuario> userManager, ILogService logService)
         {
             _context = context;
             _userManager = userManager;
+            _logService = logService; // <-- 4. ASÍGNALO
         }
 
         // GET: /Activos (Lista de Activos con Filtros)
-        [AllowAnonymous] // Permitimos que cualquiera vea la lista
+        [AllowAnonymous] 
         public async Task<IActionResult> Index(string searchString, int? categoriaId, int? ubicacionId, EstadoActivo? estado)
         {
-            // --- MODIFICACIÓN: Listas para los dropdowns de filtros ---
             ViewData["CategoriasList"] = new SelectList(_context.Categorias, "categ_id", "nom_categoria", categoriaId);
             ViewData["UbicacionesList"] = new SelectList(_context.Ubicaciones, "ubic_id", "nom_ubica", ubicacionId);
             ViewData["EstadosList"] = new SelectList(Enum.GetValues(typeof(EstadoActivo)));
 
-            // Mantenemos el estado de los filtros en la vista
             ViewData["CurrentFilter"] = searchString;
             ViewData["CurrentCategoria"] = categoriaId;
             ViewData["CurrentUbicacion"] = ubicacionId;
@@ -50,18 +52,14 @@ namespace SistemaGestionActivos.Controllers
                     a.cod_act.ToLower().Contains(searchString.ToLower())
                 );
             }
-
             if (categoriaId.HasValue)
             {
                 activosQuery = activosQuery.Where(a => a.categ_id == categoriaId.Value);
             }
-
             if (ubicacionId.HasValue)
             {
                 activosQuery = activosQuery.Where(a => a.ubic_id == ubicacionId.Value);
             }
-            
-            // --- MODIFICACIÓN: Filtrado por enum ---
             if (estado.HasValue)
             {
                 activosQuery = activosQuery.Where(a => a.estado == estado.Value);
@@ -72,7 +70,7 @@ namespace SistemaGestionActivos.Controllers
 
         
         // GET: /Activos/Detalles/5
-        [AllowAnonymous] // Permitimos que cualquiera vea los detalles
+        [AllowAnonymous] 
         public async Task<IActionResult> Detalles(int? id)
         {
             if (id == null) return NotFound();
@@ -92,10 +90,7 @@ namespace SistemaGestionActivos.Controllers
         {
             ViewData["categ_id"] = new SelectList(_context.Categorias, "categ_id", "nom_categoria");
             ViewData["ubic_id"] = new SelectList(_context.Ubicaciones, "ubic_id", "nom_ubica");
-            
-            // --- MODIFICACIÓN: Usar enum para la lista de estados ---
             ViewData["EstadosList"] = new SelectList(new List<EstadoActivo> { EstadoActivo.Disponible, EstadoActivo.EnMantenimiento, EstadoActivo.DeBaja });
-
             return View();
         }
 
@@ -109,6 +104,12 @@ namespace SistemaGestionActivos.Controllers
             {
                 _context.Add(activo);
                 await _context.SaveChangesAsync();
+                
+                // --- 5. AÑADIR REGISTRO DE LOG ---
+                var userId = _userManager.GetUserId(User);
+                await _logService.RegistrarLogAsync(userId, $"Creó el activo: {activo.nom_act}", "Activo", activo.activo_id.ToString());
+                // ---------------------------------
+
                 TempData["SuccessMessage"] = "Activo creado con éxito.";
                 return RedirectToAction(nameof(Index));
             }
@@ -122,16 +123,12 @@ namespace SistemaGestionActivos.Controllers
         public async Task<IActionResult> Editar(int? id)
         {
             if (id == null) return NotFound();
-
             var activo = await _context.Activos.FindAsync(id);
             if (activo == null) return NotFound();
                 
             ViewData["categ_id"] = new SelectList(_context.Categorias, "categ_id", "nom_categoria", activo.categ_id);
             ViewData["ubic_id"] = new SelectList(_context.Ubicaciones, "ubic_id", "nom_ubica", activo.ubic_id);
-
-            // --- MODIFICACIÓN: Usar enum para la lista de estados ---
             ViewData["EstadosList"] = new SelectList(Enum.GetValues(typeof(EstadoActivo)), activo.estado);
-
             return View(activo);
         }
 
@@ -149,6 +146,11 @@ namespace SistemaGestionActivos.Controllers
                 {
                     _context.Update(activo);
                     await _context.SaveChangesAsync();
+                    
+                    // --- 5. AÑADIR REGISTRO DE LOG ---
+                    var userId = _userManager.GetUserId(User);
+                    await _logService.RegistrarLogAsync(userId, $"Editó el activo: {activo.nom_act}", "Activo", activo.activo_id.ToString());
+                    // ---------------------------------
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -167,7 +169,7 @@ namespace SistemaGestionActivos.Controllers
         }
 
         // GET: /Activos/Eliminar/5
-        [Authorize(Roles = "Administrador")] // Solo el Administrador puede eliminar
+        [Authorize(Roles = "Administrador")] 
         public async Task<IActionResult> Eliminar(int? id)
         {
             if (id == null) return NotFound();
@@ -190,6 +192,12 @@ namespace SistemaGestionActivos.Controllers
             {
                 _context.Activos.Remove(activo);
                 await _context.SaveChangesAsync();
+                
+                // --- 5. AÑADIR REGISTRO DE LOG ---
+                var userId = _userManager.GetUserId(User);
+                await _logService.RegistrarLogAsync(userId, $"Eliminó el activo: {activo.nom_act}", "Activo", activo.activo_id.ToString());
+                // ---------------------------------
+
                 TempData["SuccessMessage"] = "Activo eliminado permanentemente.";
             }
             return RedirectToAction(nameof(Index));
