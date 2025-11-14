@@ -59,10 +59,9 @@ builder.Services.AddSingleton<SistemaGestionActivos.Services.ICategoryPrediction
 
 builder.Services.AddKernel();
 // Read model id from configuration, fallback to a broadly available model if not set
-var openAiModel = builder.Configuration["OpenAI:Model"] ?? "gpt-3.5-turbo";
-builder.Services.AddOpenAIChatCompletion(
-    modelId: openAiModel,
-    apiKey: builder.Configuration["OpenAI:ApiKey"] // <-- Pon tu clave en appsettings.json o en variables de entorno
+builder.Services.AddGoogleAIGeminiChatCompletion(
+    modelId: "gemini-pro-latest",
+    apiKey: builder.Configuration["GoogleAI:ApiKey"]
 );
 // OrdenDeTrabajoPlugin depende de servicios con lifetime 'scoped' (ApplicationDbContext, UserManager)
 // por eso debe registrarse como Scoped (no Singleton) para evitar "Cannot consume scoped service ... from singleton".
