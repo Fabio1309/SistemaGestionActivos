@@ -1,7 +1,7 @@
 services:
   # Define el servicio web de tu aplicación .NET
   - type: web
-    name: sistema-gestion-activos # El nombre de tu servicio web
+    name: GestionActivos # El nombre de tu servicio web
     env: dotnet
     buildCommand: "dotnet publish -c Release -o ./publish"
     startCommand: "dotnet SistemaGestionActivos.dll"
