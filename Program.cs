@@ -59,10 +59,12 @@ builder.Services.AddSingleton<SistemaGestionActivos.Services.ICategoryPrediction
 
 builder.Services.AddKernel();
 // Read model id from configuration, fallback to a broadly available model if not set
+#pragma warning disable SKEXP0070
 builder.Services.AddGoogleAIGeminiChatCompletion(
     modelId: "gemini-pro-latest",
     apiKey: builder.Configuration["GoogleAI:ApiKey"]
 );
+#pragma warning restore SKEXP0070
 // OrdenDeTrabajoPlugin depende de servicios con lifetime 'scoped' (ApplicationDbContext, UserManager)
 // por eso debe registrarse como Scoped (no Singleton) para evitar "Cannot consume scoped service ... from singleton".
 builder.Services.AddScoped<OrdenDeTrabajoPlugin>();
