@@ -1,39 +1,26 @@
 services:
-  # Define el servicio web de tu aplicación .NET
+  # Define el servicio web que se construirá usando tu Dockerfile
   - type: web
     name: GestionActivos # El nombre de tu servicio web
-    env: dotnet
-    buildCommand: "dotnet publish -c Release -o ./publish"
-    startCommand: "dotnet SistemaGestionActivos.dll"
+    env: docker
+    dockerfilePath: ./Dockerfile
     plan: free
     
+    # === LA CORRECCIÓN FINAL Y DIRECTA ESTÁ AQUÍ ===
+    # Pasamos los valores directamente, sin 'fromDatabase' ni 'fromSecretFile'
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
         
-      # === LA CORRECCIÓN ESTÁ AQUÍ ===
-      # Ahora el nombre de la base de datos que busca es el correcto.
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: sistema-gestion-activos # ¡Asegúrate de que este nombre sea el que quieres!
-          property: connectionString # Esto usará la Internal Connection String por defecto
-          
-      # Variable para la API de Google, desde un Secret File.
+        # ¡Pega aquí tu INTERNAL Connection String!
+        value: "postgresql://sistema_gestion_activos_user:d8ESuQeZq749aV631SES44PcXPkDqryo@dpg-d4bpt17gi27c73bjcjp0-a/sistema_gestion_activos"
+        
       - key: GoogleAI__ApiKey
-        fromSecretFile:
-          name: mis-secretos
-          key: GOOGLE_API_KEY
+        # ¡Pega aquí tu clave de API de Google!
+        value: "AIzaSyABOn5JM-NTQrEG24DlBm2U7bKj9vxKMn8"
 
-  # === Y LA CORRECCIÓN TAMBIÉN ESTÁ AQUÍ ===
   # Define el servicio de tu base de datos PostgreSQL
   - type: psql
-    name: sistema-gestion-activos # ¡Este nombre ahora COINCIDE con el de arriba!
+    name: sistema-gestion-activos # El nombre de tu base de datos
     plan: free
-    # Render añadirá automáticamente la última versión estable de PostgreSQL
-
-# Define un "Secret File" para guardar tus claves de forma segura
-secretFiles:
-  - name: mis-secretos
-    files:
-      - key: GOOGLE_API_KEY
-        value: "AIzaSyABOn5JM-NTQrEG24DlBm2U7bKj9vxKMn8" # Tu clave de API de Google
