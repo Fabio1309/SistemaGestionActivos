@@ -1,35 +1,41 @@
-# Blueprint de Render v1
-# Especifica la infraestructura como código para el Sistema de Gestión de Activos.
-
-# La clave 'services' es el punto de entrada principal para definir nuestros componentes.
 services:
-  # 1. El Servicio Web (nuestra aplicación .NET en un contenedor Docker)
+  # Define el servicio web de tu aplicación .NET
   - type: web
-    name: sistema-gestion-activos
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    
-    # Asociamos el disco persistente definido más abajo a este servicio.
-    # El disco llamado 'data-disk' se montará en la ruta '/var/data'.
-    disk:
-      name: data-disk
-      mountPath: /var/data
-      
-    # Variables de entorno para la aplicación.
+    name: sistema-gestion-activos # Puedes cambiar este nombre si quieres
+    # Usa el entorno nativo de .NET. Render se encargará de todo.
+    # ¡MUCHO MÁS FÁCIL QUE USAR DOCKER!
+    env: dotnet
+    # Comando para construir la aplicación en producción
+    buildCommand: "dotnet publish -c Release -o ./publish"
+    # Comando para iniciar la aplicación después de la construcción
+    startCommand: "dotnet SistemaGestionActivos.dll"
+    # Configuración de las variables de entorno
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
-      - key: ASPNETCORE_URLS
-        value: http://0.0.0.0:${PORT}
+      # Variable para la base de datos
       - key: ConnectionStrings__DefaultConnection
-        value: "Data Source=/var/data/sga.db"
-      - key: Redis__ConnectionString
-        fromService:
-          type: redis
-          name: cache-redis
-          property: connectionString
+        # Sincroniza el valor desde el servicio de base de datos de Render
+        fromDatabase:
+          name: nombre-de-tu-base-de-datos # ¡IMPORTANTE! Cambia esto
+          property: connectionString # Usa la conexión externa por defecto si es necesario
+      # Variable para la API de Google
+      - key: GoogleAI__ApiKey
+        # Sincroniza el valor desde un "Secret File" en Render
+        fromSecretFile:
+          name: google-api-key # Crearemos este archivo en el siguiente paso
+          key: API_KEY
 
-# La clave 'databases' es usada aquí para definir servicios que no son web, como Redis y discos.
-# Aunque Redis no es una base de datos tradicional, se agrupa aquí junto con los discos.
-# CORRECCIÓN: En la especificación más reciente, los servicios de addons y discos se definen al mismo nivel.
-# Vamos a usar la estructura más aceptada.
+  # Define el servicio de tu base de datos PostgreSQL
+  # Si la base de datos está en OTRA CUENTA, BORRA esta sección y usa un "External Service".
+  - type: psql
+    name: sistema-gestion-activos # ¡IMPORTANTE! Debe coincidir con el de arriba
+    plan: free # Elige el plan que necesites (free, starter, etc.)
+    # Aquí puedes añadir más configuraciones para la base de datos si lo necesitas
+
+# Define un "Secret File" para guardar tu clave de API de Google de forma segura
+secretFiles:
+  - name: google-api-key
+    files:
+      - key: API_KEY
+        value: AIzaSyABOn5JM-NTQrEG24DlBm2U7bKj9vxKMn8
