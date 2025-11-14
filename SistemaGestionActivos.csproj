@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-  <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-SistemaGestionActivos-0afbfb70-1e7f-40af-8b26-2d01e6b2b650</UserSecretsId>
@@ -12,22 +12,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Paquetes independientes (no necesitan cambio) -->
     <PackageReference Include="IronPdf" Version="2025.10.8" />
     <PackageReference Include="mercadopago-sdk" Version="2.10.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.10" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.10" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.ML" Version="4.0.3" />
     <PackageReference Include="Microsoft.ML" Version="4.0.3" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.67.1" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.67.1-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.47.0-preview" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="QRCoder" Version="1.7.0" />
     <PackageReference Include="SendGrid" Version="9.29.3" />
+
+    <!-- Paquetes de Microsoft y EF Core (¡CORREGIDOS A VERSIÓN 8.0.x!) -->
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.6" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+
+    <!-- Paquetes de Semantic Kernel (CORREGIDOS A VERSIONES ESTABLES COMPATIBLES) -->
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.16.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.16.1" />
+    <PackageReference Include="Microsoft.SemanticKernel.Planners.Handlebars" Version="1.16.1-alpha" />
   </ItemGroup>
 
   <!-- Excluir fuentes del subproyecto MLModel para evitar que se compilen dentro del proyecto web -->
