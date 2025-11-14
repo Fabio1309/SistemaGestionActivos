@@ -1,26 +1,29 @@
-# --- Fase 1: Compilación (Build Stage) ---
-# Usamos la imagen oficial de Microsoft con el SDK completo de .NET 8
+# Etapa 1: Compilar y publicar la aplicación
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copiamos el archivo .csproj y restauramos las dependencias
+# Copiar el archivo .csproj y restaurar las dependencias primero
 COPY ["SistemaGestionActivos.csproj", "."]
 RUN dotnet restore "./SistemaGestionActivos.csproj"
 
-# Copiamos el resto del código fuente
+# Copiar el resto del código fuente y construir
 COPY . .
+WORKDIR "/src/."
+RUN dotnet build "SistemaGestionActivos.csproj" -c Release -o /app/build
 
-# Publicamos la aplicación en modo Release en la carpeta /app/publish
+# Publicar la aplicación
+FROM build AS publish
 RUN dotnet publish "SistemaGestionActivos.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# --- Fase 2: Ejecución (Final Stage) ---
-# Usamos la imagen ligera que solo contiene el runtime de ASP.NET Core
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+# Etapa 2: Crear la imagen final de ejecución
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
 
-# Exponemos el puerto 80, que Render usará
+# Exponer el puerto que usa ASP.NET Core
 EXPOSE 80
+EXPOSE 443
 
-# Comando final para iniciar la aplicación
+# El ENTRYPOINT se asegura de que la aplicación se inicie.
+# Las variables de entorno definidas en el dashboard de Render se pasarán automáticamente a este proceso.
 ENTRYPOINT ["dotnet", "SistemaGestionActivos.dll"]
