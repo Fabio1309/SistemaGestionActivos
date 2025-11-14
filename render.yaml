@@ -1,41 +1,39 @@
 services:
   # Define el servicio web de tu aplicación .NET
   - type: web
-    name: sistema-gestion-activos # Puedes cambiar este nombre si quieres
-    # Usa el entorno nativo de .NET. Render se encargará de todo.
-    # ¡MUCHO MÁS FÁCIL QUE USAR DOCKER!
+    name: sistema-gestion-activos # El nombre de tu servicio web
     env: dotnet
-    # Comando para construir la aplicación en producción
     buildCommand: "dotnet publish -c Release -o ./publish"
-    # Comando para iniciar la aplicación después de la construcción
     startCommand: "dotnet SistemaGestionActivos.dll"
-    # Configuración de las variables de entorno
+    plan: free
+    
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
-      # Variable para la base de datos
+        
+      # === LA CORRECCIÓN ESTÁ AQUÍ ===
+      # Ahora el nombre de la base de datos que busca es el correcto.
       - key: ConnectionStrings__DefaultConnection
-        # Sincroniza el valor desde el servicio de base de datos de Render
         fromDatabase:
-          name: nombre-de-tu-base-de-datos # ¡IMPORTANTE! Cambia esto
-          property: connectionString # Usa la conexión externa por defecto si es necesario
-      # Variable para la API de Google
+          name: sistema-gestion-activos # ¡Asegúrate de que este nombre sea el que quieres!
+          property: connectionString # Esto usará la Internal Connection String por defecto
+          
+      # Variable para la API de Google, desde un Secret File.
       - key: GoogleAI__ApiKey
-        # Sincroniza el valor desde un "Secret File" en Render
         fromSecretFile:
-          name: google-api-key # Crearemos este archivo en el siguiente paso
-          key: API_KEY
+          name: mis-secretos
+          key: GOOGLE_API_KEY
 
+  # === Y LA CORRECCIÓN TAMBIÉN ESTÁ AQUÍ ===
   # Define el servicio de tu base de datos PostgreSQL
-  # Si la base de datos está en OTRA CUENTA, BORRA esta sección y usa un "External Service".
   - type: psql
-    name: sistema-gestion-activos # ¡IMPORTANTE! Debe coincidir con el de arriba
-    plan: free # Elige el plan que necesites (free, starter, etc.)
-    # Aquí puedes añadir más configuraciones para la base de datos si lo necesitas
+    name: sistema-gestion-activos # ¡Este nombre ahora COINCIDE con el de arriba!
+    plan: free
+    # Render añadirá automáticamente la última versión estable de PostgreSQL
 
-# Define un "Secret File" para guardar tu clave de API de Google de forma segura
+# Define un "Secret File" para guardar tus claves de forma segura
 secretFiles:
-  - name: google-api-key
+  - name: mis-secretos
     files:
-      - key: API_KEY
-        value: AIzaSyABOn5JM-NTQrEG24DlBm2U7bKj9vxKMn8
+      - key: GOOGLE_API_KEY
+        value: "AIzaSyABOn5JM-NTQrEG24DlBm2U7bKj9vxKMn8" # Tu clave de API de Google
