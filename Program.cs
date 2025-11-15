@@ -201,7 +201,7 @@ async Task SeedRolesAndAdminAsync(RoleManager<IdentityRole> roleManager, UserMan
             UserName = "admin@activosys.com",
             Email = "admin@activosys.com",
             NombreCompleto = "Admin Principal",
-            FechaNacimiento = new DateTime(1990, 1, 1),
+            FechaNacimiento = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             EmailConfirmed = true 
         };
         var result = await userManager.CreateAsync(newAdminUser, "Admin123*"); 
