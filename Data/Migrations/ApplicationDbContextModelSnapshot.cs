@@ -7,7 +7,7 @@ using SistemaGestionActivos.Data;
 
 #nullable disable
 
-namespace SistemaGestionActivos.Data.Migrations
+namespace SistemaGestionActivos.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot

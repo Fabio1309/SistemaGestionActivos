@@ -8,11 +8,11 @@ using SistemaGestionActivos.Data;
 
 #nullable disable
 
-namespace SistemaGestionActivos.Data.Migrations
+namespace SistemaGestionActivos.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251025161026_AddOrdenDeTrabajoTable")]
-    partial class AddOrdenDeTrabajoTable
+    [Migration("20251115153404_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -168,9 +168,8 @@ namespace SistemaGestionActivos.Data.Migrations
                     b.Property<decimal>("costo")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<string>("estado")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("estado")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("fecha_com")
                         .HasColumnType("TEXT");
@@ -227,7 +226,7 @@ namespace SistemaGestionActivos.Data.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("Asignacion");
+                    b.ToTable("Asignaciones");
                 });
 
             modelBuilder.Entity("SistemaGestionActivos.Models.Categoria", b =>
@@ -243,6 +242,101 @@ namespace SistemaGestionActivos.Data.Migrations
                     b.HasKey("categ_id");
 
                     b.ToTable("Categorias");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.CostoMantenimiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("OrdenDeTrabajoId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrdenDeTrabajoId");
+
+                    b.ToTable("CostosMantenimiento");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.Factura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Estado");
+
+                    b.Property<DateTime>("FechaEmision")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("FechaEmision");
+
+                    b.Property<string>("MetodoPago")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("MetodoPago");
+
+                    b.Property<decimal>("MontoTotal")
+                        .HasColumnType("decimal(18, 2)")
+                        .HasColumnName("MontoTotal");
+
+                    b.Property<int>("OrdenTrabajoId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("OrdenTrabajoId");
+
+                    b.Property<string>("PagoIdExterno")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("PagoIdExterno");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrdenTrabajoId")
+                        .IsUnique();
+
+                    b.ToTable("Facturas");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.LogAuditoria", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Entidad")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EntidadId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaHora")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("LogsAuditoria");
                 });
 
             modelBuilder.Entity("SistemaGestionActivos.Models.OrdenDeTrabajo", b =>
@@ -291,6 +385,39 @@ namespace SistemaGestionActivos.Data.Migrations
                     b.HasIndex("UsuarioReportaId");
 
                     b.ToTable("OrdenesDeTrabajo");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.PlanMantenimiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FechaProximaEjecucion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Frecuencia")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Intervalo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Tarea")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.ToTable("PlanesMantenimiento");
                 });
 
             modelBuilder.Entity("SistemaGestionActivos.Models.Ubicacion", b =>
@@ -462,6 +589,39 @@ namespace SistemaGestionActivos.Data.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("SistemaGestionActivos.Models.CostoMantenimiento", b =>
+                {
+                    b.HasOne("SistemaGestionActivos.Models.OrdenDeTrabajo", "OrdenDeTrabajo")
+                        .WithMany("Costos")
+                        .HasForeignKey("OrdenDeTrabajoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrdenDeTrabajo");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.Factura", b =>
+                {
+                    b.HasOne("SistemaGestionActivos.Models.OrdenDeTrabajo", "OrdenDeTrabajo")
+                        .WithOne("Factura")
+                        .HasForeignKey("SistemaGestionActivos.Models.Factura", "OrdenTrabajoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OrdenDeTrabajo");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.LogAuditoria", b =>
+                {
+                    b.HasOne("SistemaGestionActivos.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("SistemaGestionActivos.Models.OrdenDeTrabajo", b =>
                 {
                     b.HasOne("SistemaGestionActivos.Models.Activo", "Activo")
@@ -487,9 +647,27 @@ namespace SistemaGestionActivos.Data.Migrations
                     b.Navigation("UsuarioReporta");
                 });
 
+            modelBuilder.Entity("SistemaGestionActivos.Models.PlanMantenimiento", b =>
+                {
+                    b.HasOne("SistemaGestionActivos.Models.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
+                });
+
             modelBuilder.Entity("SistemaGestionActivos.Models.Activo", b =>
                 {
                     b.Navigation("HistorialAsignaciones");
+                });
+
+            modelBuilder.Entity("SistemaGestionActivos.Models.OrdenDeTrabajo", b =>
+                {
+                    b.Navigation("Costos");
+
+                    b.Navigation("Factura");
                 });
 #pragma warning restore 612, 618
         }
