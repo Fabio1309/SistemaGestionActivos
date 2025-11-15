@@ -10,64 +10,68 @@ using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Environment.IsProduction())
-{
-    // En producción, usa PostgreSQL. La connection string vendrá de Render.
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseNpgsql(connectionString));
-}
-else
-{
-    // En desarrollo, sigue usando SQLite para simplicidad local.
-    var connectionString = builder.Configuration.GetConnectionString("SQLiteConnection") ?? "Data Source=app.db";
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite(connectionString));
-}
+// --- 1. CONFIGURACIÓN DE LA BASE DE DATOS (MODIFICADO PARA RENDER) ---
+// Obtenemos la cadena de conexión. En Render, vendrá de la variable de entorno que configuraste.
+// En desarrollo, la leerá de tu archivo appsettings.Development.json.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Configuramos Entity Framework Core para que use siempre PostgreSQL (Npgsql).
+// Esto simplifica el código y es la práctica recomendada para producción.
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // --- 2. AÑADIR Y CONFIGURAR EL SERVICIO DE IDENTITY ---
-// Le decimos a la aplicación que use nuestra clase 'Usuario' para la identidad.
-// También habilitamos el manejo de Roles.
 builder.Services.AddDefaultIdentity<Usuario>(options => options.SignIn.RequireConfirmedAccount = false)
-    .AddRoles<IdentityRole>() // <-- ¡LÍNEA CLAVE PARA HABILITAR ROLES!
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// Esto ya lo tienes, registra los controladores y vistas.
 builder.Services.AddControllersWithViews();
-
 builder.Services.AddHostedService<MantenimientoSchedulerService>();
-
 builder.Services.AddScoped<ILogService, LogService>();
 
-// Registrar PredictionEnginePool si existe el modelo copiado en wwwroot/models/Model.zip
 var modelPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "models", "Model.zip");
 if (File.Exists(modelPath))
 {
-    // Registrar el pool y cargar el modelo nombrado "mlModel"
     builder.Services.AddPredictionEnginePool<TicketDataML, TicketPredictionML>()
         .FromFile(modelName: "mlModel", filePath: modelPath, watchForChanges: false);
 }
 else
 {
-    // Si no existe, no registramos el pool; el servicio hará fallback cargando Model.zip desde rutas alternativas.
     Console.WriteLine($"Warning: Model.zip no encontrado en {modelPath}. PredictionEnginePool no será registrado.");
 }
 
-// Registrar servicio de predicción (usa pool si está disponible, sino fallback)
 builder.Services.AddSingleton<SistemaGestionActivos.Services.ICategoryPredictionService, SistemaGestionActivos.Services.CategoryPredictionService>();
-
 builder.Services.AddKernel();
-// Read model id from configuration, fallback to a broadly available model if not set
 builder.Services.AddGoogleAIGeminiChatCompletion(
     modelId: "gemini-pro-latest",
     apiKey: builder.Configuration["GoogleAI:ApiKey"]
 );
-// OrdenDeTrabajoPlugin depende de servicios con lifetime 'scoped' (ApplicationDbContext, UserManager)
-// por eso debe registrarse como Scoped (no Singleton) para evitar "Cannot consume scoped service ... from singleton".
 builder.Services.AddScoped<OrdenDeTrabajoPlugin>();
 
 var app = builder.Build();
+
+// --- INICIO: APLICAR MIGRACIONES AUTOMÁTICAMENTE (NUEVO) ---
+// Este bloque se asegura de que la base de datos de PostgreSQL en Render
+// esté siempre actualizada con el esquema más reciente al iniciar la app.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
+        // Aplica cualquier migración de EF Core que esté pendiente.
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        // Si la migración falla, lo registramos para poder depurarlo en los logs de Render.
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al intentar migrar la base de datos en el arranque.");
+    }
+}
+// --- FIN: APLICAR MIGRACIONES AUTOMÁTICAMENTE ---
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -81,18 +85,14 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// --- 3. ACTIVAR LA AUTENTICACIÓN Y AUTORIZACIÓN ---
-// El orden de estas dos líneas es MUY IMPORTANTE.
-app.UseAuthentication(); // Primero, la aplicación identifica quién es el usuario (autenticación).
-app.UseAuthorization();  // Después, verifica si ese usuario tiene permiso para acceder (autorización).
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// --- 4. AÑADIR MAPEO DE RAZOR PAGES ---
-// Esto es necesario para que las páginas de Login, Registro, etc., que generaremos después, funcionen.
-app.MapRazorPages(); 
+app.MapRazorPages();
 
 // Esta sección crea los roles y un usuario administrador la primera vez que se ejecuta
 using (var scope = app.Services.CreateScope())
@@ -104,9 +104,7 @@ using (var scope = app.Services.CreateScope())
         var userManager = services.GetRequiredService<UserManager<Usuario>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
-        // Ejecuta el método para crear roles y el admin
         await SeedRolesAndAdminAsync(roleManager, userManager);
-            // --- DIAGNÓSTICO: listar roles del admin para verificar seed ---
             var logger = services.GetRequiredService<ILogger<Program>>();
             try
             {
@@ -115,7 +113,6 @@ using (var scope = app.Services.CreateScope())
                 {
                     var adminRoles = await userManager.GetRolesAsync(admin);
                     logger.LogInformation("Seed check: admin '{Email}' roles: {Roles}", admin.Email, string.Join(',', adminRoles));
-                    // Si no tiene el rol 'Administrador', lo agregamos para asegurarnos de que pueda acceder a las áreas de admin.
                     if (!adminRoles.Contains("Administrador"))
                     {
                         var addResult = await userManager.AddToRoleAsync(admin, "Administrador");
@@ -129,7 +126,6 @@ using (var scope = app.Services.CreateScope())
                         }
                     }
 
-                    // Además hacemos una comprobación directa en la BD para ver las filas de AspNetUserRoles vinculadas al admin.
                     try
                     {
                         var userRoles = context.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<string>>()
@@ -171,25 +167,20 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// --- AÑADE ESTE MÉTODO AL FINAL DE TU ARCHIVO Program.cs ---
 async Task SeedRolesAndAdminAsync(RoleManager<IdentityRole> roleManager, UserManager<Usuario> userManager)
 {
-    // Lista de roles que tu sistema necesita
     string[] roleNames = { "Administrador", "Gestor de Activos", "Técnico", "Empleado" };
     IdentityResult roleResult;
 
     foreach (var roleName in roleNames)
     {
-        // Verifica si el rol ya existe
         var roleExist = await roleManager.RoleExistsAsync(roleName);
         if (!roleExist)
         {
-            // Crea el rol si no existe
             roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
 
-    // Opcional: Crear un usuario Administrador por defecto
     var adminUser = await userManager.FindByEmailAsync("admin@activosys.com");
     if (adminUser == null)
     {
@@ -198,18 +189,15 @@ async Task SeedRolesAndAdminAsync(RoleManager<IdentityRole> roleManager, UserMan
             UserName = "admin@activosys.com",
             Email = "admin@activosys.com",
             NombreCompleto = "Admin Principal",
-            FechaNacimiento = new DateTime(1990, 1, 1), // Una fecha de ejemplo
+            FechaNacimiento = new DateTime(1990, 1, 1),
             EmailConfirmed = true 
         };
-        // ¡CAMBIA ESTA CONTRASEÑA!
         var result = await userManager.CreateAsync(newAdminUser, "Admin123*"); 
         if (result.Succeeded)
         {
-            // Asigna el rol "Administrador" al nuevo usuario
             await userManager.AddToRoleAsync(newAdminUser, "Administrador");
         }
     }
 }
 
 app.Run();
-
