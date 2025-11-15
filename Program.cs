@@ -10,13 +10,29 @@ using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- INICIO: CÓDIGO DE DIAGNÓSTICO TEMPORAL ---
+// Este bloque nos dirá si la variable de entorno de Render se está leyendo correctamente.
+using var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
+var logger = loggerFactory.CreateLogger<Program>();
+
+var connectionStringFromConfig = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionStringFromConfig))
+{
+    logger.LogWarning("ALERTA: La cadena de conexión 'DefaultConnection' es NULA o VACÍA.");
+}
+else
+{
+    // No imprimimos la cadena completa por seguridad, solo una confirmación.
+    logger.LogInformation("ÉXITO: Cadena de conexión 'DefaultConnection' encontrada. Longitud: {Length}", connectionStringFromConfig.Length);
+}
+// --- FIN: CÓDIGO DE DIAGNÓSTICO TEMPORAL ---
+
+
 // --- 1. CONFIGURACIÓN DE LA BASE DE DATOS (MODIFICADO PARA RENDER) ---
-// Obtenemos la cadena de conexión. En Render, vendrá de la variable de entorno que configuraste.
-// En desarrollo, la leerá de tu archivo appsettings.Development.json.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Configuramos Entity Framework Core para que use siempre PostgreSQL (Npgsql).
-// Esto simplifica el código y es la práctica recomendada para producción.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -52,23 +68,19 @@ builder.Services.AddScoped<OrdenDeTrabajoPlugin>();
 
 var app = builder.Build();
 
-// --- INICIO: APLICAR MIGRACIONES AUTOMÁTICAMENTE (NUEVO) ---
-// Este bloque se asegura de que la base de datos de PostgreSQL en Render
-// esté siempre actualizada con el esquema más reciente al iniciar la app.
+// --- INICIO: APLICAR MIGRACIONES AUTOMÁTICAMENTE ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
-        // Aplica cualquier migración de EF Core que esté pendiente.
         dbContext.Database.Migrate();
     }
     catch (Exception ex)
     {
-        // Si la migración falla, lo registramos para poder depurarlo en los logs de Render.
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error al intentar migrar la base de datos en el arranque.");
+        var migrationLogger = services.GetRequiredService<ILogger<Program>>();
+        migrationLogger.LogError(ex, "Ocurrió un error al intentar migrar la base de datos en el arranque.");
     }
 }
 // --- FIN: APLICAR MIGRACIONES AUTOMÁTICAMENTE ---
@@ -105,24 +117,24 @@ using (var scope = app.Services.CreateScope())
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         
         await SeedRolesAndAdminAsync(roleManager, userManager);
-            var logger = services.GetRequiredService<ILogger<Program>>();
+            var seedLogger = services.GetRequiredService<ILogger<Program>>();
             try
             {
                 var admin = await userManager.FindByEmailAsync("admin@activosys.com");
                 if (admin != null)
                 {
                     var adminRoles = await userManager.GetRolesAsync(admin);
-                    logger.LogInformation("Seed check: admin '{Email}' roles: {Roles}", admin.Email, string.Join(',', adminRoles));
+                    seedLogger.LogInformation("Seed check: admin '{Email}' roles: {Roles}", admin.Email, string.Join(',', adminRoles));
                     if (!adminRoles.Contains("Administrador"))
                     {
                         var addResult = await userManager.AddToRoleAsync(admin, "Administrador");
                         if (addResult.Succeeded)
                         {
-                            logger.LogInformation("Seed fix: admin '{Email}' fue agregado al rol 'Administrador'", admin.Email);
+                            seedLogger.LogInformation("Seed fix: admin '{Email}' fue agregado al rol 'Administrador'", admin.Email);
                         }
                         else
                         {
-                            logger.LogWarning("Seed fix: no se pudo agregar el admin '{Email}' al rol 'Administrador': {Errors}", admin.Email, string.Join(';', addResult.Errors.Select(e => e.Description)));
+                            seedLogger.LogWarning("Seed fix: no se pudo agregar el admin '{Email}' al rol 'Administrador': {Errors}", admin.Email, string.Join(';', addResult.Errors.Select(e => e.Description)));
                         }
                     }
 
@@ -138,32 +150,32 @@ using (var scope = app.Services.CreateScope())
                                 .Where(r => roleIds.Contains(r.Id))
                                 .Select(r => r.Name)
                                 .ToList();
-                            logger.LogInformation("DB check: admin '{Email}' roles in AspNetUserRoles: {DBRoles}", admin.Email, string.Join(',', roleNames));
+                            seedLogger.LogInformation("DB check: admin '{Email}' roles in AspNetUserRoles: {DBRoles}", admin.Email, string.Join(',', roleNames));
                         }
                         else
                         {
-                            logger.LogInformation("DB check: admin '{Email}' no tiene entradas en AspNetUserRoles", admin.Email);
+                            seedLogger.LogInformation("DB check: admin '{Email}' no tiene entradas en AspNetUserRoles", admin.Email);
                         }
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "Error al consultar AspNetUserRoles para admin");
+                        seedLogger.LogError(ex, "Error al consultar AspNetUserRoles para admin");
                     }
                 }
                 else
                 {
-                    logger.LogWarning("Seed check: admin user 'admin@activosys.com' not found");
+                    seedLogger.LogWarning("Seed check: admin user 'admin@activosys.com' not found");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error while checking admin roles after seed");
+                seedLogger.LogError(ex, "Error while checking admin roles after seed");
             }
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error durante la siembra de datos.");
+        var seedLogger = services.GetRequiredService<ILogger<Program>>();
+        seedLogger.LogError(ex, "Ocurrió un error durante la siembra de datos.");
     }
 }
 
